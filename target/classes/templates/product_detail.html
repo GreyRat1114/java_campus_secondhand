@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>商品详情</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="/products">校园二手交易平台</a>
+    <nav>
+        <a href="/products">商品列表</a>
+        <a href="/forum">校园论坛</a>
+        <a th:if="${session.user != null}" href="/orders">我的订单</a>
+        <a th:if="${session.user != null}" href="/profile">个人中心</a>
+        <a th:if="${session.user != null}" href="/messages">我的消息</a>
+        <a th:if="${session.user != null}" href="/friends">好友</a>
+        <a th:if="${session.user == null}" href="/login">登录</a>
+        <a th:if="${session.user != null}" href="/logout">退出</a>
+    </nav>
+</header>
+<main class="container">
+    <div class="error" th:if="${error != null}" th:text="${error}"></div>
+    <div class="success" th:if="${success != null}" th:text="${success}"></div>
+
+    <section class="card detail" th:if="${product != null}">
+        <div>
+            <img th:if="${product.mainImageUrl != null}" th:src="${product.mainImageUrl}" alt="商品图片">
+            <div class="no-img detail-no-img" th:if="${product.mainImageUrl == null}">暂无图片</div>
+        </div>
+        <div>
+            <h2 th:text="${product.title}">商品标题</h2>
+            <p class="price big" th:text="'￥' + ${product.price}">￥0</p>
+            <p>分类：<span th:text="${product.categoryName}"></span></p>
+            <p>卖家：<span th:text="${product.sellerName}"></span></p>
+            <p>状态：<span class="badge" th:text="${product.statusText}"></span></p>
+            <p class="desc" th:text="${product.description}"></p>
+
+            <div th:if="${session.user == null}">
+                <a class="btn" href="/login">登录后购买</a>
+                <a class="btn secondary" href="/login">登录后联系卖家</a>
+            </div>
+            <form method="post" th:action="@{/orders/create/{id}(id=${product.id})}"
+                  th:if="${session.user != null and session.user.role == 'USER' and product.status == 'ON_SALE' and session.user.id != product.sellerId}">
+                <button type="submit">我要购买</button>
+            </form>
+            <a class="btn secondary"
+               th:if="${session.user != null and session.user.id != product.sellerId}"
+               th:href="@{/messages/chat/{targetId}(targetId=${product.sellerId}, productId=${product.id})}">
+                联系卖家
+            </a>
+            <form method="post"
+                  th:if="${session.user != null and session.user.id != product.sellerId}"
+                  th:action="@{/friends/follow/{id}(id=${product.sellerId})}">
+                <input type="hidden"
+                       name="redirect"
+                       th:value="@{/products/{id}(id=${product.id})}">
+                <button type="submit">关注卖家</button>
+            </form>
+            <button disabled th:if="${session.user != null and session.user.id == product.sellerId}">这是你发布的商品</button>
+            <button disabled th:if="${session.user != null and product.status != 'ON_SALE'}">当前不可购买</button>
+        </div>
+    </section>
+</main>
+</body>
+</html>

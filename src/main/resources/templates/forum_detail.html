@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${post.title}">帖子详情</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="/products">校园二手交易平台</a>
+    <nav>
+        <a href="/products">商品列表</a>
+        <a href="/forum">校园论坛</a>
+        <a th:if="${session.user != null}" href="/forum/new">我要发帖</a>
+        <a th:if="${session.user != null}" href="/my/posts">我的帖子</a>
+        <a th:if="${session.user != null}" href="/profile">个人中心</a>
+        <a th:if="${session.user != null}" href="/messages">我的消息</a>
+        <a th:if="${session.user != null}" href="/friends">好友</a>
+        <a th:if="${session.user == null}" href="/login">登录</a>
+        <a th:if="${session.user != null}" href="/logout">退出</a>
+    </nav>
+</header>
+
+<main class="container">
+    <div class="success" th:if="${success != null}" th:text="${success}"></div>
+    <div class="error" th:if="${error != null}" th:text="${error}"></div>
+
+    <section class="card post-detail">
+        <div>
+            <span class="badge" th:if="${post.boardName != null}" th:text="${post.boardName}"></span>
+            <span class="badge" th:text="${post.postTypeText}"></span>
+        </div>
+        <h1 th:text="${post.title}"></h1>
+        <div class="post-author">
+            <img class="avatar"
+                 th:src="${post.avatarUrl == null ? '/img/default-avatar.svg' : post.avatarUrl}"
+                 alt="头像">
+            <div>
+                <b th:text="${post.username}"></b>
+                <div class="forum-meta">
+                    <span>浏览：<b th:text="${post.viewCount}"></b></span>
+                    <span>回复：<b th:text="${post.commentCount}"></b></span>
+                    <span th:text="${#temporals.format(post.createTime, 'yyyy-MM-dd HH:mm')}"></span>
+                </div>
+            </div>
+        </div>
+        <div class="actions"
+             th:if="${session.user != null and session.user.id == post.userId}">
+            <a class="btn secondary"
+               th:href="@{/my/posts/{id}/edit(id=${post.id})}">
+                编辑帖子
+            </a>
+            <form method="post"
+                  th:action="@{/my/posts/{id}/delete(id=${post.id})}"
+                  onsubmit="return confirm('确定要删除这篇帖子吗？');">
+                <button type="submit" class="danger">删除帖子</button>
+            </form>
+        </div>
+        <div class="linked-product-card" th:if="${post.productId != null}">
+            <img th:if="${post.productImageUrl != null}"
+                 th:src="${post.productImageUrl}"
+                 alt="商品图">
+            <div>
+                <div>帖子关联商品</div>
+                <a th:href="@{/products/{id}(id=${post.productId})}"
+                   th:text="${post.productTitle}">
+                </a>
+            </div>
+        </div>
+        <div class="post-content" th:text="${post.content}"></div>
+    </section>
+
+    <section class="card">
+        <h2>全部回复</h2>
+
+        <div class="floor-item" th:each="c, stat : ${comments}">
+            <div class="floor-left">
+                <img class="avatar"
+                     th:src="${c.avatarUrl == null ? '/img/default-avatar.svg' : c.avatarUrl}"
+                     alt="头像">
+                <div class="floor-username" th:text="${c.username}"></div>
+            </div>
+
+            <div class="floor-main">
+                <div class="floor-meta">
+                    <span th:text="'第 ' + ${stat.index + 1} + ' 楼'"></span>
+                    <span th:text="${#temporals.format(c.createTime, 'yyyy-MM-dd HH:mm')}"></span>
+                </div>
+
+                <div class="floor-content" th:text="${c.content}"></div>
+
+                <div class="floor-actions">
+                    <form method="post"
+                          th:if="${session.user != null}"
+                          th:action="@{/forum/comments/{id}/like(id=${c.id})}">
+                        <input type="hidden" name="postId" th:value="${post.id}">
+                        <button type="submit"
+                                th:text="${(c.likedByMe == true ? '取消点赞 ' : '点赞 ') + c.likeCount}">
+                        </button>
+                    </form>
+
+                    <span th:if="${session.user == null}">
+                        点赞 <span th:text="${c.likeCount}"></span>
+                    </span>
+
+                    <button type="button"
+                            th:if="${session.user != null}"
+                            onclick="this.parentElement.nextElementSibling.classList.toggle('hidden')">
+                        评论
+                    </button>
+                </div>
+
+                <div class="reply-form hidden" th:if="${session.user != null}">
+                    <form method="post" th:action="@{/forum/{id}/comments(id=${post.id})}">
+                        <input type="hidden" name="parentId" th:value="${c.id}">
+                        <textarea name="content"
+                                  rows="3"
+                                  maxlength="1000"
+                                  placeholder="回复这一楼"
+                                  required></textarea>
+                        <button type="submit">发送评论</button>
+                    </form>
+                </div>
+
+                <div class="child-replies" th:if="${c.children != null and !#lists.isEmpty(c.children)}">
+                    <div class="child-reply" th:each="r : ${c.children}">
+                        <img class="avatar small-avatar"
+                             th:src="${r.avatarUrl == null ? '/img/default-avatar.svg' : r.avatarUrl}"
+                             alt="头像">
+
+                        <div class="child-reply-main">
+                            <div class="child-reply-meta">
+                                <b th:text="${r.username}"></b>
+                                <span th:text="${#temporals.format(r.createTime, 'yyyy-MM-dd HH:mm')}"></span>
+                            </div>
+
+                            <div class="child-reply-content" th:text="${r.content}"></div>
+
+                            <div class="floor-actions">
+                                <form method="post"
+                                      th:if="${session.user != null}"
+                                      th:action="@{/forum/comments/{id}/like(id=${r.id})}">
+                                    <input type="hidden" name="postId" th:value="${post.id}">
+                                    <button type="submit"
+                                            th:text="${(r.likedByMe == true ? '取消点赞 ' : '点赞 ') + r.likeCount}">
+                                    </button>
+                                </form>
+
+                                <span th:if="${session.user == null}">
+                                    点赞 <span th:text="${r.likeCount}"></span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(comments)}" class="hint">
+            暂无回复，来抢一楼。
+        </div>
+    </section>
+
+    <section class="card" th:if="${session.user != null}">
+        <h2>发表回复</h2>
+        <form method="post"
+              th:action="@{/forum/{id}/comments(id=${post.id})}"
+              class="form-vertical">
+            <textarea name="content"
+                      rows="5"
+                      maxlength="1000"
+                      placeholder="请输入回复内容"
+                      required></textarea>
+            <button type="submit">回复</button>
+        </form>
+    </section>
+
+    <section class="card" th:if="${session.user == null}">
+        <a class="btn" href="/login">登录后回复</a>
+    </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.secondhand.mapper.ProductMapper">
+    <sql id="productColumns">
+        p.id, p.title, p.description, p.price, p.category_id, p.seller_id, p.status, p.create_time,
+        c.name AS category_name,
+        u.username AS seller_name,
+        (SELECT image_url FROM product_image pi WHERE pi.product_id = p.id ORDER BY pi.id LIMIT 1) AS main_image_url
+    </sql>
+
+    <select id="findPage" resultType="Product">
+        SELECT <include refid="productColumns" />
+        FROM product p
+        LEFT JOIN category c ON p.category_id = c.id
+        LEFT JOIN sys_user u ON p.seller_id = u.id
+        <where>
+            <if test="status != null and status != ''">
+                AND p.status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (p.title ILIKE CONCAT('%', #{keyword}, '%') OR p.description ILIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="categoryId != null">
+                AND p.category_id = #{categoryId}
+            </if>
+        </where>
+        ORDER BY p.create_time DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="int">
+        SELECT COUNT(*)
+        FROM product p
+        <where>
+            <if test="status != null and status != ''">
+                AND p.status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (p.title ILIKE CONCAT('%', #{keyword}, '%') OR p.description ILIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="categoryId != null">
+                AND p.category_id = #{categoryId}
+            </if>
+        </where>
+    </select>
+
+    <select id="findById" resultType="Product">
+        SELECT <include refid="productColumns" />
+        FROM product p
+        LEFT JOIN category c ON p.category_id = c.id
+        LEFT JOIN sys_user u ON p.seller_id = u.id
+        WHERE p.id = #{id}
+    </select>
+
+    <select id="findBySellerId" resultType="Product">
+        SELECT <include refid="productColumns" />
+        FROM product p
+        LEFT JOIN category c ON p.category_id = c.id
+        LEFT JOIN sys_user u ON p.seller_id = u.id
+        WHERE p.seller_id = #{sellerId}
+        ORDER BY p.create_time DESC
+    </select>
+
+    <insert id="insert" parameterType="Product" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO product(title, description, price, category_id, seller_id, status, create_time)
+        VALUES(#{title}, #{description}, #{price}, #{categoryId}, #{sellerId}, #{status}, now())
+    </insert>
+
+    <insert id="insertImage">
+        INSERT INTO product_image(product_id, image_url) VALUES(#{productId}, #{imageUrl})
+    </insert>
+
+    <update id="updateStatus">
+        UPDATE product SET status = #{status} WHERE id = #{id}
+    </update>
+</mapper>

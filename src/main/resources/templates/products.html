@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>商品列表</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="/products">校园二手交易平台</a>
+    <nav>
+        <a href="/products/new">发布商品</a>
+        <a href="/forum">校园论坛</a>
+        <a th:if="${session.user != null}" href="/my/posts">我的帖子</a>
+        <a th:if="${session.user != null}" href="/orders">我的订单</a>
+        <a th:if="${session.user != null}" href="/profile">个人中心</a>
+        <a th:if="${session.user != null}" href="/messages">我的消息</a>
+        <a th:if="${session.user != null}" href="/friends">好友</a>
+        <a th:if="${session.user != null and session.user.role == 'ADMIN'}" href="/admin">管理后台</a>
+        <a th:if="${session.user == null}" href="/login">登录</a>
+        <a th:if="${session.user != null}" href="/logout">退出</a>
+    </nav>
+</header>
+
+<main class="container">
+    <section class="card">
+        <h2>二手商品</h2>
+        <form class="search-form" method="get" action="/products">
+            <input name="keyword" placeholder="搜索商品标题/描述" th:value="${keyword}">
+            <select name="categoryId">
+                <option value="">全部分类</option>
+                <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}"
+                        th:selected="${categoryId != null and categoryId == c.id}"></option>
+            </select>
+            <button type="submit">查询</button>
+        </form>
+    </section>
+
+    <section class="grid">
+        <div class="product-card" th:each="p : ${products}">
+            <img th:if="${p.mainImageUrl != null}" th:src="${p.mainImageUrl}" alt="商品图片">
+            <div class="no-img" th:if="${p.mainImageUrl == null}">暂无图片</div>
+            <h3 th:text="${p.title}">商品标题</h3>
+            <p class="price" th:text="'￥' + ${p.price}">￥0</p>
+            <p class="meta"><span th:text="${p.categoryName}"></span> · 卖家：<span th:text="${p.sellerName}"></span></p>
+            <a class="btn" th:href="@{/products/{id}(id=${p.id})}">查看详情</a>
+        </div>
+    </section>
+
+    <div class="pager">
+        <a th:if="${page > 1}" th:href="@{/products(page=${page - 1}, keyword=${keyword}, categoryId=${categoryId})}">上一页</a>
+        <span th:text="${page} + ' / ' + ${totalPage}"></span>
+        <a th:if="${page < totalPage}" th:href="@{/products(page=${page + 1}, keyword=${keyword}, categoryId=${categoryId})}">下一页</a>
+    </div>
+</main>
+</body>
+</html>

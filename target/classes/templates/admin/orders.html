@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>订单管理</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="topbar admin">
+    <a class="brand" href="/admin">管理后台</a>
+    <nav>
+        <a href="/admin">后台首页</a>
+        <a href="/admin/categories">分类管理</a>
+        <a href="/admin/reviews">评价管理</a>
+        <a href="/admin/forum/boards">板块管理</a>
+        <a href="/admin/forum/posts">帖子管理</a>
+        <a href="/admin/forum/comments">评论管理</a>
+        <a href="/products">前台商品</a>
+        <a href="/logout">退出</a>
+    </nav>
+</header>
+<main class="container">
+    <section class="card">
+        <h2>全部订单</h2>
+        <table>
+            <thead>
+            <tr><th>订单号</th><th>商品</th><th>价格</th><th>买家</th><th>卖家</th><th>状态</th><th>创建时间</th><th>完成时间</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="o : ${orders}">
+                <td th:text="${o.id}"></td>
+                <td><a th:href="@{/products/{id}(id=${o.productId})}" th:text="${o.productTitle}"></a></td>
+                <td class="price" th:text="'￥' + ${o.productPrice}"></td>
+                <td th:text="${o.buyerName}"></td>
+                <td th:text="${o.sellerName}"></td>
+                <td><span class="badge" th:text="${o.statusText}"></span></td>
+                <td th:text="${#temporals.format(o.createTime, 'yyyy-MM-dd HH:mm')}"></td>
+                <td th:text="${o.finishTime == null ? '-' : #temporals.format(o.finishTime, 'yyyy-MM-dd HH:mm')}"></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(orders)}"><td colspan="8">暂无订单</td></tr>
+            </tbody>
+        </table>
+        <div class="pager">
+            <a th:if="${page > 1}" th:href="@{/admin/orders(page=${page - 1})}">上一页</a>
+            <span th:text="${page} + ' / ' + ${totalPage}"></span>
+            <a th:if="${page < totalPage}" th:href="@{/admin/orders(page=${page + 1})}">下一页</a>
+        </div>
+    </section>
+</main>
+</body>
+</html>

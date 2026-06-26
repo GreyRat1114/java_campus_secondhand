@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>私聊</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="/products">校园二手交易平台</a>
+    <nav>
+        <a href="/products">商品列表</a>
+        <a href="/forum">校园论坛</a>
+        <a href="/orders">我的订单</a>
+        <a href="/profile">个人中心</a>
+        <a href="/messages">我的消息</a>
+        <a href="/friends">好友</a>
+        <a href="/logout">退出</a>
+    </nav>
+</header>
+
+<main class="container small">
+    <section class="card">
+        <h2>
+            正在和
+            <span th:text="${targetUser.username}"></span>
+            私聊
+        </h2>
+
+        <div class="chat-actions">
+            <form method="post"
+                  th:action="@{/friends/follow/{id}(id=${targetUser.id})}">
+                <input type="hidden"
+                       name="redirect"
+                       th:value="@{/messages/chat/{id}(id=${targetUser.id})}">
+                <button type="submit">关注对方</button>
+            </form>
+            <a class="btn secondary" href="/friends">查看好友列表</a>
+        </div>
+
+        <div th:if="${product != null}" class="chat-product">
+            <p>
+                关联商品：
+                <a th:href="@{/products/{id}(id=${product.id})}" th:text="${product.title}"></a>
+                <span class="price" th:text="'￥' + ${product.price}"></span>
+            </p>
+        </div>
+
+        <div class="error" th:if="${error != null}" th:text="${error}"></div>
+        <div class="success" th:if="${success != null}" th:text="${success}"></div>
+
+        <div class="chat-box"
+             id="chatBox"
+             th:data-target-id="${targetUser.id}"
+             th:data-current-id="${session.user.id}">
+            <div th:each="m : ${messages}"
+                 th:class="${m.senderId == session.user.id ? 'message-row mine' : 'message-row other'}">
+                <div class="message-bubble">
+                    <div class="message-meta">
+                        <span th:text="${m.senderName}"></span>
+                        <span th:text="${#temporals.format(m.createTime, 'MM-dd HH:mm')}"></span>
+                    </div>
+                    <div class="message-content" th:text="${m.content}"></div>
+                    <div class="message-product" th:if="${m.productTitle != null}">
+                        关于商品：
+                        <span th:text="${m.productTitle}"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div th:if="${#lists.isEmpty(messages)}" class="empty-chat">
+                暂无聊天记录，可以先发一条消息。
+            </div>
+        </div>
+
+        <form class="chat-form" id="chatForm">
+            <input type="hidden" name="receiverId" th:value="${targetUser.id}">
+            <input type="hidden" name="productId" th:value="${productId}">
+            <textarea name="content"
+                      maxlength="500"
+                      rows="4"
+                      placeholder="请输入消息内容，最多500字"
+                      required></textarea>
+            <button type="submit">发送</button>
+        </form>
+    </section>
+</main>
+<script>
+    const chatBox = document.getElementById("chatBox");
+    const chatForm = document.getElementById("chatForm");
+
+    const targetId = chatBox.dataset.targetId;
+    const currentUserId = Number(chatBox.dataset.currentId);
+
+    function formatTime(value) {
+        if (!value) return "";
+
+        let date;
+        if (Array.isArray(value)) {
+            date = new Date(
+                value[0],
+                value[1] - 1,
+                value[2],
+                value[3] || 0,
+                value[4] || 0,
+                value[5] || 0
+            );
+        } else {
+            date = new Date(value);
+        }
+
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        const hour = String(date.getHours()).padStart(2, "0");
+        const minute = String(date.getMinutes()).padStart(2, "0");
+
+        return `${month}-${day} ${hour}:${minute}`;
+    }
+
+    function createMessageElement(message) {
+        const row = document.createElement("div");
+        row.className = Number(message.senderId) === currentUserId
+            ? "message-row mine"
+            : "message-row other";
+
+        const bubble = document.createElement("div");
+        bubble.className = "message-bubble";
+
+        const meta = document.createElement("div");
+        meta.className = "message-meta";
+
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = message.senderName || "";
+
+        const timeSpan = document.createElement("span");
+        timeSpan.textContent = formatTime(message.createTime);
+
+        meta.appendChild(nameSpan);
+        meta.appendChild(timeSpan);
+
+        const content = document.createElement("div");
+        content.className = "message-content";
+        content.textContent = message.content || "";
+
+        bubble.appendChild(meta);
+        bubble.appendChild(content);
+
+        if (message.productTitle) {
+            const product = document.createElement("div");
+            product.className = "message-product";
+            product.textContent = "关于商品：" + message.productTitle;
+            bubble.appendChild(product);
+        }
+
+        row.appendChild(bubble);
+        return row;
+    }
+
+    async function loadMessages() {
+        try {
+            const response = await fetch(`/messages/api/conversation/${targetId}`);
+            const messages = await response.json();
+
+            chatBox.innerHTML = "";
+
+            if (messages.length === 0) {
+                const empty = document.createElement("div");
+                empty.className = "empty-chat";
+                empty.textContent = "暂无聊天记录，可以先发一条消息。";
+                chatBox.appendChild(empty);
+                return;
+            }
+
+            messages.forEach(message => {
+                chatBox.appendChild(createMessageElement(message));
+            });
+
+            chatBox.scrollTop = chatBox.scrollHeight;
+        } catch (e) {
+            console.log("加载消息失败", e);
+        }
+    }
+
+    chatForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const formData = new FormData(chatForm);
+        if (!formData.get("productId")) {
+            formData.delete("productId");
+        }
+
+        try {
+            const response = await fetch("/messages/api/send", {
+                method: "POST",
+                body: formData
+            });
+
+            const result = await response.json();
+            if (!result.success) {
+                alert(result.message || "发送失败");
+                return;
+            }
+
+            chatForm.querySelector("textarea[name='content']").value = "";
+            await loadMessages();
+        } catch (e) {
+            alert("发送失败，请稍后重试");
+        }
+    });
+
+    loadMessages();
+    setInterval(loadMessages, 2000);
+</script>
+</body>
+</html>

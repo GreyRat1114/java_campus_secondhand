@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.secondhand.mapper.UserMapper">
+    <select id="findByUsername" resultType="User">
+        SELECT * FROM sys_user WHERE username = #{username}
+    </select>
+
+    <select id="findById" resultType="User">
+        SELECT * FROM sys_user WHERE id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_user(username, password, role, phone, credit_score, status, create_time)
+        VALUES(#{username}, #{password}, #{role}, #{phone}, #{creditScore}, #{status}, now())
+    </insert>
+
+    <update id="updateCreditScore">
+        UPDATE sys_user
+        SET credit_score = GREATEST(0, LEAST(150, credit_score + #{delta}))
+        WHERE id = #{id}
+    </update>
+</mapper>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>评价管理</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="topbar admin">
+    <a class="brand" href="/admin">管理后台</a>
+    <nav>
+        <a href="/admin">后台首页</a>
+        <a href="/admin/categories">分类管理</a>
+        <a href="/admin/orders">订单管理</a>
+        <a href="/admin/reviews">评价管理</a>
+        <a href="/admin/forum/boards">板块管理</a>
+        <a href="/admin/forum/posts">帖子管理</a>
+        <a href="/admin/forum/comments">评论管理</a>
+        <a href="/products">前台商品</a>
+        <a href="/messages">我的消息</a>
+        <a href="/logout">退出</a>
+    </nav>
+</header>
+
+<main class="container">
+    <section class="card">
+        <h2>评价管理</h2>
+        <table>
+            <thead>
+            <tr><th>ID</th><th>订单号</th><th>商品</th><th>评价人</th><th>被评价人</th><th>评分</th><th>内容</th><th>评价时间</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="r : ${reviews}">
+                <td th:text="${r.id}"></td>
+                <td th:text="${r.orderId}"></td>
+                <td th:text="${r.productTitle}"></td>
+                <td th:text="${r.reviewerName}"></td>
+                <td th:text="${r.targetUserName}"></td>
+                <td><span class="stars" th:text="${r.score} + '分'"></span></td>
+                <td th:text="${r.content}"></td>
+                <td th:text="${#temporals.format(r.createTime, 'yyyy-MM-dd HH:mm')}"></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(reviews)}"><td colspan="8">暂无评价</td></tr>
+            </tbody>
+        </table>
+
+        <div class="pager">
+            <a th:if="${page > 1}" th:href="@{/admin/reviews(page=${page - 1})}">上一页</a>
+            <span th:text="'第 ' + ${page} + ' / ' + ${totalPage} + ' 页'"></span>
+            <a th:if="${page < totalPage}" th:href="@{/admin/reviews(page=${page + 1})}">下一页</a>
+        </div>
+    </section>
+</main>
+</body>
+</html>

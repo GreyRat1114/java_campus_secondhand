@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.secondhand.mapper.MessageMapper">
+
+    <insert id="insert" parameterType="PrivateMessage" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO private_message(sender_id, receiver_id, product_id, content, is_read, create_time)
+        VALUES(#{senderId}, #{receiverId}, #{productId}, #{content}, false, now())
+    </insert>
+
+    <select id="findConversation" resultType="PrivateMessage">
+        SELECT
+            m.id,
+            m.sender_id,
+            m.receiver_id,
+            m.product_id,
+            m.content,
+            m.is_read,
+            m.create_time,
+            sender.username AS sender_name,
+            receiver.username AS receiver_name,
+            p.title AS product_title
+        FROM private_message m
+        LEFT JOIN sys_user sender ON m.sender_id = sender.id
+        LEFT JOIN sys_user receiver ON m.receiver_id = receiver.id
+        LEFT JOIN product p ON m.product_id = p.id
+        WHERE
+            (m.sender_id = #{userId} AND m.receiver_id = #{targetId})
+            OR
+            (m.sender_id = #{targetId} AND m.receiver_id = #{userId})
+        ORDER BY m.create_time ASC, m.id ASC
+    </select>
+
+    <select id="findChatList" resultType="PrivateMessage">
+        WITH msg AS (
+            SELECT
+                m.*,
+                CASE
+                    WHEN m.sender_id = #{userId} THEN m.receiver_id
+                    ELSE m.sender_id
+                END AS target_id
+            FROM private_message m
+            WHERE m.sender_id = #{userId}
+               OR m.receiver_id = #{userId}
+        ),
+        latest AS (
+            SELECT DISTINCT ON (target_id)
+                *
+            FROM msg
+            ORDER BY target_id, create_time DESC, id DESC
+        )
+        SELECT
+            l.id,
+            l.sender_id,
+            l.receiver_id,
+            l.product_id,
+            l.content,
+            l.is_read,
+            l.create_time,
+            l.target_id,
+            target.username AS target_name,
+            sender.username AS sender_name,
+            receiver.username AS receiver_name,
+            p.title AS product_title,
+            (
+                SELECT COUNT(*)::int
+                FROM private_message unread
+                WHERE unread.sender_id = l.target_id
+                  AND unread.receiver_id = #{userId}
+                  AND unread.is_read = false
+            ) AS unread_count
+        FROM latest l
+        LEFT JOIN sys_user target ON l.target_id = target.id
+        LEFT JOIN sys_user sender ON l.sender_id = sender.id
+        LEFT JOIN sys_user receiver ON l.receiver_id = receiver.id
+        LEFT JOIN product p ON l.product_id = p.id
+        ORDER BY l.create_time DESC, l.id DESC
+    </select>
+
+    <update id="markRead">
+        UPDATE private_message
+        SET is_read = true
+        WHERE sender_id = #{targetId}
+          AND receiver_id = #{userId}
+          AND is_read = false
+    </update>
+
+    <select id="countUnread" resultType="int">
+        SELECT COUNT(*)
+        FROM private_message
+        WHERE receiver_id = #{userId}
+          AND is_read = false
+    </select>
+
+</mapper>

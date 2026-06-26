@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>我的消息</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="/products">校园二手交易平台</a>
+    <nav>
+        <a href="/products">商品列表</a>
+        <a href="/products/new">发布商品</a>
+        <a href="/forum">校园论坛</a>
+        <a href="/orders">我的订单</a>
+        <a href="/profile">个人中心</a>
+        <a href="/messages">我的消息</a>
+        <a href="/friends">好友</a>
+        <a th:if="${session.user != null and session.user.role == 'ADMIN'}" href="/admin">管理后台</a>
+        <a href="/logout">退出</a>
+    </nav>
+</header>
+
+<main class="container">
+    <section class="card">
+        <h2>我的消息</h2>
+        <p>
+            未读消息：
+            <span class="badge" th:text="${unreadCount}">0</span>
+        </p>
+
+        <div class="error" th:if="${error != null}" th:text="${error}"></div>
+        <div class="success" th:if="${success != null}" th:text="${success}"></div>
+
+        <table>
+            <thead>
+            <tr>
+                <th>聊天对象</th>
+                <th>关联商品</th>
+                <th>最后一条消息</th>
+                <th>未读</th>
+                <th>时间</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="c : ${chats}">
+                <td th:text="${c.targetName}"></td>
+                <td th:text="${c.productTitle == null ? '无' : c.productTitle}"></td>
+                <td th:text="${c.content}"></td>
+                <td><span class="badge" th:text="${c.unreadCount}"></span></td>
+                <td th:text="${#temporals.format(c.createTime, 'yyyy-MM-dd HH:mm')}"></td>
+                <td><a class="btn" th:href="@{/messages/chat/{id}(id=${c.targetId})}">进入聊天</a></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(chats)}">
+                <td colspan="6">暂无私信</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+</body>
+</html>

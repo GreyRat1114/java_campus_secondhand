@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.secondhand.mapper.ForumBoardMapper">
+
+    <select id="findNormalBoards" resultType="ForumBoard">
+        SELECT id, name, description, status, sort_order, create_time
+        FROM forum_board
+        WHERE status = 'NORMAL'
+        ORDER BY sort_order ASC, id ASC
+    </select>
+
+    <select id="findAdminBoards" resultType="ForumBoard">
+        SELECT
+            b.id,
+            b.name,
+            b.description,
+            b.status,
+            b.sort_order,
+            b.create_time,
+            (
+                SELECT COUNT(*)::int
+                FROM forum_post p
+                WHERE p.board_id = b.id
+                  AND p.status = 'NORMAL'
+            ) AS post_count
+        FROM forum_board b
+        ORDER BY b.sort_order ASC, b.id ASC
+    </select>
+
+    <select id="findById" resultType="ForumBoard">
+        SELECT id, name, description, status, sort_order, create_time
+        FROM forum_board
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="ForumBoard" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO forum_board(name, description, status, sort_order, create_time)
+        VALUES(#{name}, #{description}, 'NORMAL', #{sortOrder}, now())
+    </insert>
+
+    <update id="update" parameterType="ForumBoard">
+        UPDATE forum_board
+        SET name = #{name},
+            description = #{description},
+            sort_order = #{sortOrder}
+        WHERE id = #{id}
+    </update>
+
+    <update id="deleteBoard">
+        UPDATE forum_board
+        SET status = 'DELETED'
+        WHERE id = #{id}
+    </update>
+
+    <select id="countPosts" resultType="int">
+        SELECT COUNT(*)
+        FROM forum_post
+        WHERE board_id = #{boardId}
+          AND status = 'NORMAL'
+    </select>
+
+</mapper>

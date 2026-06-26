@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>发表评价</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="/products">校园二手交易平台</a>
+    <nav>
+        <a href="/orders">我的订单</a>
+        <a href="/profile">个人中心</a>
+        <a href="/messages">我的消息</a>
+        <a href="/products">商品列表</a>
+        <a href="/logout">退出</a>
+    </nav>
+</header>
+
+<main class="container small">
+    <section class="card">
+        <h2>发表评价</h2>
+        <p>订单号：<span th:text="${order.id}"></span></p>
+        <p>商品：<span th:text="${order.productTitle}"></span></p>
+        <p>卖家：<span th:text="${order.sellerName}"></span></p>
+        <p>价格：<span class="price" th:text="'￥' + ${order.productPrice}"></span></p>
+
+        <form class="form-vertical" method="post" th:action="@{/reviews/create/{orderId}(orderId=${order.id})}">
+            <label>评分</label>
+            <select name="score" required>
+                <option value="5">5分：非常满意</option>
+                <option value="4">4分：比较满意</option>
+                <option value="3">3分：一般</option>
+                <option value="2">2分：不太满意</option>
+                <option value="1">1分：很不满意</option>
+            </select>
+
+            <label>评价内容</label>
+            <textarea name="content" rows="5" maxlength="500" placeholder="请输入本次交易评价，最多500字"></textarea>
+
+            <button type="submit">提交评价</button>
+            <a class="btn secondary" href="/orders">返回订单</a>
+        </form>
+    </section>
+</main>
+</body>
+</html>

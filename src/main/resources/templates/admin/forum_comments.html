@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>论坛评论管理</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="topbar admin">
+    <a class="brand" href="/admin">管理后台</a>
+    <nav>
+        <a href="/admin">后台首页</a>
+        <a href="/admin/categories">分类管理</a>
+        <a href="/admin/orders">订单管理</a>
+        <a href="/admin/reviews">评价管理</a>
+        <a href="/admin/forum/boards">板块管理</a>
+        <a href="/admin/forum/posts">帖子管理</a>
+        <a href="/admin/forum/comments">评论管理</a>
+        <a href="/forum">前台论坛</a>
+        <a href="/products">前台商品</a>
+        <a href="/logout">退出</a>
+    </nav>
+</header>
+
+<main class="container">
+    <div class="success" th:if="${success != null}" th:text="${success}"></div>
+    <div class="error" th:if="${error != null}" th:text="${error}"></div>
+
+    <section class="card">
+        <h2>论坛评论管理</h2>
+
+        <form method="get" action="/admin/forum/comments" class="search-form">
+            <input type="text"
+                   name="keyword"
+                   placeholder="搜索评论内容、评论人、帖子标题"
+                   th:value="${keyword}">
+
+            <select name="status">
+                <option value="">全部状态</option>
+                <option value="NORMAL" th:selected="${status == 'NORMAL'}">正常</option>
+                <option value="DELETED" th:selected="${status == 'DELETED'}">已删除</option>
+            </select>
+
+            <button type="submit">筛选</button>
+        </form>
+
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>帖子</th>
+                <th>评论人</th>
+                <th>内容</th>
+                <th>状态</th>
+                <th>评论时间</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="c : ${comments}">
+                <td th:text="${c.id}"></td>
+                <td>
+                    <a th:if="${c.status == 'NORMAL'}"
+                       th:href="@{/forum/{id}(id=${c.postId})}"
+                       th:text="${c.postTitle}"></a>
+                    <span th:if="${c.status != 'NORMAL'}"
+                          th:text="${c.postTitle}"></span>
+                </td>
+                <td th:text="${c.username}"></td>
+                <td class="comment-admin-content" th:text="${c.content}"></td>
+                <td><span class="badge" th:text="${c.statusText}"></span></td>
+                <td th:text="${#temporals.format(c.createTime, 'yyyy-MM-dd HH:mm')}"></td>
+                <td class="actions">
+                    <a class="btn"
+                       th:if="${c.status == 'NORMAL'}"
+                       th:href="@{/forum/{id}(id=${c.postId})}">查看帖子</a>
+                    <form method="post"
+                          th:if="${c.status == 'NORMAL'}"
+                          th:action="@{/admin/forum/comments/{id}/delete(id=${c.id})}"
+                          onsubmit="return confirm('确定要删除这条评论吗？');">
+                        <input type="hidden" name="page" th:value="${page}">
+                        <input type="hidden" name="keyword" th:value="${keyword}">
+                        <input type="hidden" name="status" th:value="${status}">
+                        <button type="submit" class="danger">删除</button>
+                    </form>
+                    <span class="hint" th:if="${c.status == 'DELETED'}">已删除</span>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(comments)}">
+                <td colspan="7">暂无评论数据</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="pager">
+            <a th:if="${page > 1}"
+               th:href="@{/admin/forum/comments(page=${page - 1}, keyword=${keyword}, status=${status})}">上一页</a>
+            <span th:text="'第 ' + ${page} + ' / ' + ${totalPage} + ' 页'"></span>
+            <a th:if="${page < totalPage}"
+               th:href="@{/admin/forum/comments(page=${page + 1}, keyword=${keyword}, status=${status})}">下一页</a>
+        </div>
+    </section>
+</main>
+</body>
+</html>

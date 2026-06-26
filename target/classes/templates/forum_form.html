@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>发布帖子</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="/products">校园二手交易平台</a>
+    <nav>
+        <a href="/products">商品列表</a>
+        <a href="/forum">校园论坛</a>
+        <a href="/my/posts">我的帖子</a>
+        <a href="/profile">个人中心</a>
+        <a href="/messages">我的消息</a>
+        <a href="/friends">好友</a>
+        <a href="/logout">退出</a>
+    </nav>
+</header>
+
+<main class="container small">
+    <section class="card">
+        <h2>发布帖子</h2>
+        <div class="error" th:if="${error != null}" th:text="${error}"></div>
+
+        <form method="post" action="/forum/create" class="form-vertical">
+            <label>帖子类型</label>
+            <select name="postType" required>
+                <option value="NEED">交易需求</option>
+                <option value="DISCUSS">校园交流</option>
+            </select>
+
+            <label>所属板块</label>
+            <select name="boardId" required>
+                <option th:each="b : ${boards}"
+                        th:value="${b.id}"
+                        th:text="${b.name}">
+                </option>
+            </select>
+
+            <label>关联我的商品，可选</label>
+            <select name="productId">
+                <option value="">不关联商品</option>
+                <option th:each="p : ${myProducts}"
+                        th:value="${p.id}"
+                        th:text="${p.title + ' ￥' + p.price}">
+                </option>
+            </select>
+
+            <label>标题</label>
+            <input type="text"
+                   name="title"
+                   maxlength="100"
+                   placeholder="例如：出二手显示器 / 求购教材 / 有人一起拼车吗？"
+                   required>
+
+            <label>内容</label>
+            <textarea name="content"
+                      rows="10"
+                      maxlength="5000"
+                      placeholder="请输入帖子内容"
+                      required></textarea>
+
+            <button type="submit">发布</button>
+            <a class="btn secondary" href="/forum">返回论坛</a>
+        </form>
+    </section>
+</main>
+</body>
+</html>

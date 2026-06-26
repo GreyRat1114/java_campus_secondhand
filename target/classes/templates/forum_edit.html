@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>编辑帖子</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="/products">校园二手交易平台</a>
+    <nav>
+        <a href="/products">商品列表</a>
+        <a href="/forum">校园论坛</a>
+        <a href="/my/posts">我的帖子</a>
+        <a href="/profile">个人中心</a>
+        <a href="/messages">我的消息</a>
+        <a href="/friends">好友</a>
+        <a href="/logout">退出</a>
+    </nav>
+</header>
+
+<main class="container small">
+    <section class="card">
+        <h2>编辑帖子</h2>
+        <div class="error" th:if="${error != null}" th:text="${error}"></div>
+
+        <form method="post"
+              th:action="@{/my/posts/{id}/update(id=${post.id})}"
+              class="form-vertical">
+            <label>帖子类型</label>
+            <select name="postType" required>
+                <option value="NEED" th:selected="${post.postType == 'NEED'}">交易需求</option>
+                <option value="DISCUSS" th:selected="${post.postType == 'DISCUSS'}">校园交流</option>
+            </select>
+
+            <label>标题</label>
+            <input type="text"
+                   name="title"
+                   maxlength="100"
+                   th:value="${post.title}"
+                   required>
+
+            <label>内容</label>
+            <textarea name="content"
+                      rows="10"
+                      maxlength="5000"
+                      required
+                      th:text="${post.content}"></textarea>
+
+            <button type="submit">保存修改</button>
+            <a class="btn secondary" href="/my/posts">返回我的帖子</a>
+        </form>
+    </section>
+</main>
+</body>
+</html>

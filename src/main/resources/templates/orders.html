@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>我的订单</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="/products">校园二手交易平台</a>
+    <nav>
+        <a href="/products">商品列表</a>
+        <a href="/products/new">发布商品</a>
+        <a href="/forum">校园论坛</a>
+        <a href="/orders">我的订单</a>
+        <a href="/profile">个人中心</a>
+        <a href="/messages">我的消息</a>
+        <a href="/friends">好友</a>
+        <a th:if="${session.user != null and session.user.role == 'ADMIN'}" href="/admin">管理后台</a>
+        <a href="/logout">退出</a>
+    </nav>
+</header>
+
+<main class="container">
+    <div class="error" th:if="${error != null}" th:text="${error}"></div>
+    <div class="success" th:if="${success != null}" th:text="${success}"></div>
+
+    <section class="card">
+        <h2>我买到的订单</h2>
+        <table>
+            <thead>
+            <tr><th>订单号</th><th>商品</th><th>价格</th><th>卖家</th><th>状态</th><th>创建时间</th><th>操作</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="o : ${buyerOrders}">
+                <td th:text="${o.id}"></td>
+                <td><a th:href="@{/products/{id}(id=${o.productId})}" th:text="${o.productTitle}"></a></td>
+                <td class="price" th:text="'￥' + ${o.productPrice}"></td>
+                <td th:text="${o.sellerName}"></td>
+                <td><span class="badge" th:text="${o.statusText}"></span></td>
+                <td th:text="${#temporals.format(o.createTime, 'yyyy-MM-dd HH:mm')}"></td>
+                <td class="actions">
+                    <form method="post" th:action="@{/orders/{id}/finish(id=${o.id})}" th:if="${o.orderStatus == 'TRADING'}">
+                        <button type="submit">确认完成</button>
+                    </form>
+                    <form method="post" th:action="@{/orders/{id}/cancel(id=${o.id})}" th:if="${o.orderStatus == 'WAIT_CONFIRM' or o.orderStatus == 'TRADING'}">
+                        <button type="submit" class="danger">取消</button>
+                    </form>
+                    <span class="hint" th:if="${o.orderStatus == 'WAIT_CONFIRM'}">等待卖家确认</span>
+                    <a class="btn" th:if="${o.orderStatus == 'FINISHED' and not o.reviewed}"
+                       th:href="@{/reviews/new/{orderId}(orderId=${o.id})}">去评价</a>
+                    <span class="hint" th:if="${o.orderStatus == 'FINISHED' and o.reviewed}">已评价</span>
+                    <span class="hint" th:if="${o.orderStatus == 'CANCELED'}">已取消</span>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(buyerOrders)}"><td colspan="7">暂无购买订单</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="card">
+        <h2>我卖出的订单</h2>
+        <table>
+            <thead>
+            <tr><th>订单号</th><th>商品</th><th>价格</th><th>买家</th><th>状态</th><th>创建时间</th><th>操作</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="o : ${sellerOrders}">
+                <td th:text="${o.id}"></td>
+                <td><a th:href="@{/products/{id}(id=${o.productId})}" th:text="${o.productTitle}"></a></td>
+                <td class="price" th:text="'￥' + ${o.productPrice}"></td>
+                <td th:text="${o.buyerName}"></td>
+                <td><span class="badge" th:text="${o.statusText}"></span></td>
+                <td th:text="${#temporals.format(o.createTime, 'yyyy-MM-dd HH:mm')}"></td>
+                <td class="actions">
+                    <form method="post" th:action="@{/orders/{id}/confirm(id=${o.id})}" th:if="${o.orderStatus == 'WAIT_CONFIRM'}">
+                        <button type="submit">确认交易</button>
+                    </form>
+                    <form method="post" th:action="@{/orders/{id}/cancel(id=${o.id})}" th:if="${o.orderStatus == 'WAIT_CONFIRM' or o.orderStatus == 'TRADING'}">
+                        <button type="submit" class="danger">取消</button>
+                    </form>
+                    <span class="hint" th:if="${o.orderStatus == 'TRADING'}">等待买家完成</span>
+                    <span class="hint" th:if="${o.orderStatus == 'FINISHED'}">交易完成</span>
+                    <span class="hint" th:if="${o.orderStatus == 'CANCELED'}">已取消</span>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(sellerOrders)}"><td colspan="7">暂无出售订单</td></tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+</body>
+</html>

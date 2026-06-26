@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>我的帖子</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="/products">校园二手交易平台</a>
+    <nav>
+        <a href="/products">商品列表</a>
+        <a href="/forum">校园论坛</a>
+        <a href="/forum/new">我要发帖</a>
+        <a href="/my/posts">我的帖子</a>
+        <a href="/profile">个人中心</a>
+        <a href="/messages">我的消息</a>
+        <a href="/friends">好友</a>
+        <a href="/logout">退出</a>
+    </nav>
+</header>
+
+<main class="container">
+    <div class="success" th:if="${success != null}" th:text="${success}"></div>
+    <div class="error" th:if="${error != null}" th:text="${error}"></div>
+
+    <section class="card forum-header">
+        <div>
+            <h2>我的帖子</h2>
+            <p class="hint">这里可以查看、编辑和删除自己发布的帖子。</p>
+        </div>
+        <a class="btn" href="/forum/new">发布新帖子</a>
+    </section>
+
+    <section class="card">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>类型</th>
+                <th>标题</th>
+                <th>浏览</th>
+                <th>回复</th>
+                <th>发布时间</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${myPosts}">
+                <td th:text="${p.id}"></td>
+                <td><span class="badge" th:text="${p.postTypeText}"></span></td>
+                <td>
+                    <a th:href="@{/forum/{id}(id=${p.id})}" th:text="${p.title}"></a>
+                </td>
+                <td th:text="${p.viewCount}"></td>
+                <td th:text="${p.commentCount}"></td>
+                <td th:text="${#temporals.format(p.createTime, 'yyyy-MM-dd HH:mm')}"></td>
+                <td class="actions">
+                    <a class="btn" th:href="@{/forum/{id}(id=${p.id})}">查看</a>
+                    <a class="btn secondary"
+                       th:href="@{/my/posts/{id}/edit(id=${p.id})}">
+                        编辑
+                    </a>
+                    <form method="post"
+                          th:action="@{/my/posts/{id}/delete(id=${p.id})}"
+                          onsubmit="return confirm('确定要删除这篇帖子吗？删除后普通用户将无法查看。');">
+                        <button type="submit" class="danger">删除</button>
+                    </form>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(myPosts)}">
+                <td colspan="7">你还没有发布过帖子。</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+</body>
+</html>

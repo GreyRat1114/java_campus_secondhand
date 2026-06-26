@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>管理后台</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+</head>
+<body>
+<header class="topbar admin">
+    <a class="brand" href="/admin">管理后台</a>
+    <nav>
+        <a href="/admin/categories">分类管理</a>
+        <a href="/admin/orders">订单管理</a>
+        <a href="/admin/reviews">评价管理</a>
+        <a href="/admin/forum/boards">板块管理</a>
+        <a href="/admin/forum/posts">帖子管理</a>
+        <a href="/admin/forum/comments">评论管理</a>
+        <a href="/products">前台商品</a>
+        <a href="/logout">退出</a>
+    </nav>
+</header>
+<main class="container">
+    <section class="charts">
+        <div class="card"><h3>商品分类统计</h3><div id="categoryChart" class="chart"></div></div>
+        <div class="card"><h3>最近7天订单统计</h3><div id="orderChart" class="chart"></div></div>
+    </section>
+
+    <section class="card">
+        <h2>待审核商品</h2>
+        <table>
+            <thead>
+            <tr><th>ID</th><th>标题</th><th>分类</th><th>价格</th><th>卖家</th><th>操作</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${pendingProducts}">
+                <td th:text="${p.id}"></td>
+                <td><a th:href="@{/products/{id}(id=${p.id})}" th:text="${p.title}"></a></td>
+                <td th:text="${p.categoryName}"></td>
+                <td th:text="${p.price}"></td>
+                <td th:text="${p.sellerName}"></td>
+                <td class="actions">
+                    <form method="post" th:action="@{/admin/products/{id}/approve(id=${p.id})}"><button>通过</button></form>
+                    <form method="post" th:action="@{/admin/products/{id}/reject(id=${p.id})}"><button class="danger">拒绝</button></form>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(pendingProducts)}"><td colspan="6">暂无待审核商品</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="card">
+        <h2>最近订单</h2>
+        <table>
+            <thead>
+            <tr><th>订单号</th><th>商品</th><th>买家</th><th>卖家</th><th>状态</th><th>创建时间</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="o : ${recentOrders}">
+                <td th:text="${o.id}"></td>
+                <td><a th:href="@{/products/{id}(id=${o.productId})}" th:text="${o.productTitle}"></a></td>
+                <td th:text="${o.buyerName}"></td>
+                <td th:text="${o.sellerName}"></td>
+                <td><span class="badge" th:text="${o.statusText}"></span></td>
+                <td th:text="${#temporals.format(o.createTime, 'yyyy-MM-dd HH:mm')}"></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(recentOrders)}"><td colspan="6">暂无订单</td></tr>
+            </tbody>
+        </table>
+        <p><a class="btn" href="/admin/orders">查看全部订单</a></p>
+    </section>
+</main>
+
+<script>
+    fetch('/api/stats/category').then(r => r.json()).then(data => {
+        const chart = echarts.init(document.getElementById('categoryChart'));
+        chart.setOption({
+            tooltip: {},
+            series: [{ type: 'pie', radius: '65%', data: data }]
+        });
+    });
+
+    fetch('/api/stats/orders7days').then(r => r.json()).then(data => {
+        const chart = echarts.init(document.getElementById('orderChart'));
+        chart.setOption({
+            tooltip: {},
+            xAxis: { type: 'category', data: data.map(x => x.day) },
+            yAxis: { type: 'value' },
+            series: [{ type: 'bar', data: data.map(x => x.count) }]
+        });
+    });
+</script>
+</body>
+</html>

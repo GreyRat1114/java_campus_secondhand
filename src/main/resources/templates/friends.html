@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>好友列表</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="/products">校园二手交易平台</a>
+    <nav>
+        <a href="/products">商品列表</a>
+        <a href="/products/new">发布商品</a>
+        <a href="/forum">校园论坛</a>
+        <a href="/orders">我的订单</a>
+        <a href="/profile">个人中心</a>
+        <a href="/messages">我的消息</a>
+        <a href="/friends">好友</a>
+        <a th:if="${session.user != null and session.user.role == 'ADMIN'}" href="/admin">管理后台</a>
+        <a href="/logout">退出</a>
+    </nav>
+</header>
+
+<main class="container">
+    <div class="success" th:if="${success != null}" th:text="${success}"></div>
+    <div class="error" th:if="${error != null}" th:text="${error}"></div>
+
+    <section class="card">
+        <h2>查找用户</h2>
+        <form method="get" action="/friends" class="search-form">
+            <input type="text"
+                   name="keyword"
+                   placeholder="输入用户名搜索"
+                   th:value="${keyword}">
+            <button type="submit">搜索</button>
+        </form>
+
+        <table>
+            <thead>
+            <tr>
+                <th>用户名</th>
+                <th>信用分</th>
+                <th>关系</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="u : ${searchResults}">
+                <td th:text="${u.targetName}"></td>
+                <td th:text="${u.targetCreditScore}"></td>
+                <td>
+                    <span class="badge" th:if="${u.friend == true}">好友</span>
+                    <span class="badge" th:if="${u.friend != true and u.followedByMe == true}">已关注</span>
+                    <span class="badge" th:if="${u.friend != true and u.followedByMe != true and u.followingMe == true}">对方关注了你</span>
+                    <span class="badge" th:if="${u.friend != true and u.followedByMe != true and u.followingMe != true}">陌生人</span>
+                </td>
+                <td class="actions">
+                    <form method="post"
+                          th:if="${u.followedByMe != true}"
+                          th:action="@{/friends/follow/{id}(id=${u.targetId})}">
+                        <input type="hidden" name="redirect" value="/friends">
+                        <button type="submit">关注</button>
+                    </form>
+
+                    <form method="post"
+                          th:if="${u.followedByMe == true}"
+                          th:action="@{/friends/unfollow/{id}(id=${u.targetId})}">
+                        <input type="hidden" name="redirect" value="/friends">
+                        <button type="submit" class="danger">取消关注</button>
+                    </form>
+
+                    <a class="btn"
+                       th:if="${u.friend == true}"
+                       th:href="@{/messages/chat/{id}(id=${u.targetId})}">
+                        私信
+                    </a>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(searchResults)}">
+                <td colspan="4">没有找到用户</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="card">
+        <h2>我的好友</h2>
+        <p class="hint">相互关注后会自动成为好友，可以直接私信。</p>
+        <table>
+            <thead>
+            <tr>
+                <th>好友</th>
+                <th>信用分</th>
+                <th>成为好友时间</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="f : ${friends}">
+                <td th:text="${f.targetName}"></td>
+                <td th:text="${f.targetCreditScore}"></td>
+                <td th:text="${#temporals.format(f.createTime, 'yyyy-MM-dd HH:mm')}"></td>
+                <td class="actions">
+                    <a class="btn" th:href="@{/messages/chat/{id}(id=${f.targetId})}">私信</a>
+                    <form method="post"
+                          th:action="@{/friends/unfollow/{id}(id=${f.targetId})}">
+                        <input type="hidden" name="redirect" value="/friends">
+                        <button type="submit" class="danger">取消关注</button>
+                    </form>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(friends)}">
+                <td colspan="4">暂无好友。你可以先搜索用户并关注，对方回关后就会成为好友。</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="card">
+        <h2>我关注的人</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>用户名</th>
+                <th>信用分</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="f : ${followingList}">
+                <td th:text="${f.targetName}"></td>
+                <td th:text="${f.targetCreditScore}"></td>
+                <td>
+                    <span class="badge" th:if="${f.friend == true}">好友</span>
+                    <span class="badge" th:if="${f.friend != true}">已关注，等待回关</span>
+                </td>
+                <td class="actions">
+                    <a class="btn"
+                       th:if="${f.friend == true}"
+                       th:href="@{/messages/chat/{id}(id=${f.targetId})}">
+                        私信
+                    </a>
+                    <form method="post"
+                          th:action="@{/friends/unfollow/{id}(id=${f.targetId})}">
+                        <input type="hidden" name="redirect" value="/friends">
+                        <button type="submit" class="danger">取消关注</button>
+                    </form>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(followingList)}">
+                <td colspan="4">你还没有关注任何人</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="card">
+        <h2>关注我的人</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>用户名</th>
+                <th>信用分</th>
+                <th>关系</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="f : ${followerList}">
+                <td th:text="${f.targetName}"></td>
+                <td th:text="${f.targetCreditScore}"></td>
+                <td>
+                    <span class="badge" th:if="${f.friend == true}">好友</span>
+                    <span class="badge" th:if="${f.friend != true}">对方关注了你</span>
+                </td>
+                <td class="actions">
+                    <form method="post"
+                          th:if="${f.friend != true}"
+                          th:action="@{/friends/follow/{id}(id=${f.targetId})}">
+                        <input type="hidden" name="redirect" value="/friends">
+                        <button type="submit">回关</button>
+                    </form>
+                    <a class="btn"
+                       th:if="${f.friend == true}"
+                       th:href="@{/messages/chat/{id}(id=${f.targetId})}">
+                        私信
+                    </a>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(followerList)}">
+                <td colspan="4">暂时还没人关注你</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+</body>
+</html>

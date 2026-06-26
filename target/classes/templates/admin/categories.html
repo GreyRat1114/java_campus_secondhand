@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>商品分类管理</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="topbar admin">
+    <a class="brand" href="/admin">管理后台</a>
+    <nav>
+        <a href="/admin">后台首页</a>
+        <a href="/admin/categories">分类管理</a>
+        <a href="/admin/orders">订单管理</a>
+        <a href="/admin/reviews">评价管理</a>
+        <a href="/admin/forum/boards">板块管理</a>
+        <a href="/admin/forum/posts">帖子管理</a>
+        <a href="/admin/forum/comments">评论管理</a>
+        <a href="/products">前台商品</a>
+        <a href="/logout">退出</a>
+    </nav>
+</header>
+
+<main class="container">
+    <div class="success" th:if="${success != null}" th:text="${success}"></div>
+    <div class="error" th:if="${error != null}" th:text="${error}"></div>
+
+    <section class="card">
+        <h2>新增分类</h2>
+        <form method="post" action="/admin/categories/create" class="form-inline">
+            <input type="text" name="name" placeholder="分类名称" required>
+            <input type="text" name="description" placeholder="分类说明">
+            <button type="submit">添加</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2>商品分类列表</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>分类名称 / 说明 / 数量</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="c : ${categories}">
+                <td th:text="${c.id}"></td>
+                <td>
+                    <form method="post"
+                          th:action="@{/admin/categories/{id}/update(id=${c.id})}"
+                          class="form-inline">
+                        <input type="text" name="name" th:value="${c.name}" required>
+                        <input type="text" name="description" th:value="${c.description}">
+                        <span class="badge" th:text="${c.productCount} + ' 件商品'"></span>
+                        <button type="submit">保存</button>
+                    </form>
+                </td>
+                <td>
+                    <form method="post"
+                          th:action="@{/admin/categories/{id}/delete(id=${c.id})}"
+                          onsubmit="return confirm('确定删除该分类吗？分类下有商品时不能删除。');">
+                        <button type="submit" class="danger">删除</button>
+                    </form>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(categories)}">
+                <td colspan="3">暂无分类</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+</body>
+</html>

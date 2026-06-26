@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>个人中心</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="/products">校园二手交易平台</a>
+    <nav>
+        <a href="/products">商品列表</a>
+        <a href="/products/new">发布商品</a>
+        <a href="/forum">校园论坛</a>
+        <a href="/my/posts">我的帖子</a>
+        <a href="/orders">我的订单</a>
+        <a href="/profile">个人中心</a>
+        <a href="/messages">我的消息</a>
+        <a href="/friends">好友</a>
+        <a th:if="${session.user != null and session.user.role == 'ADMIN'}" href="/admin">管理后台</a>
+        <a href="/logout">退出</a>
+    </nav>
+</header>
+
+<main class="container">
+    <section class="profile-hero">
+        <div>
+            <h2 th:text="${user.username}">用户名</h2>
+            <p>
+                角色：
+                <span class="badge" th:text="${user.role == 'ADMIN' ? '管理员' : '普通用户'}"></span>
+                状态：
+                <span class="badge" th:text="${user.status == 'NORMAL' ? '正常' : '已禁用'}"></span>
+            </p>
+            <p>
+                手机：
+                <span th:text="${user.phone == null || user.phone == '' ? '未填写' : user.phone}"></span>
+            </p>
+            <p>
+                注册时间：
+                <span th:text="${#temporals.format(user.createTime, 'yyyy-MM-dd HH:mm')}"></span>
+            </p>
+        </div>
+
+        <div class="credit-box">
+            <div class="credit-score" th:text="${user.creditScore}">100</div>
+            <div>信用分</div>
+        </div>
+    </section>
+
+    <section class="stats-grid">
+        <div class="stat-card">
+            <strong th:text="${#lists.size(myProducts)}">0</strong>
+            <span>发布商品</span>
+        </div>
+        <div class="stat-card">
+            <strong th:text="${#lists.size(buyerOrders)}">0</strong>
+            <span>购买订单</span>
+        </div>
+        <div class="stat-card">
+            <strong th:text="${#lists.size(sellerOrders)}">0</strong>
+            <span>出售订单</span>
+        </div>
+        <div class="stat-card">
+            <strong th:text="${#lists.size(receivedReviews)}">0</strong>
+            <span>收到评价</span>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>我发布的商品</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>商品</th>
+                <th>分类</th>
+                <th>价格</th>
+                <th>状态</th>
+                <th>发布时间</th>
+                <th>详情</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${myProducts}">
+                <td th:text="${p.id}"></td>
+                <td th:text="${p.title}"></td>
+                <td th:text="${p.categoryName}"></td>
+                <td class="price" th:text="'￥' + ${p.price}"></td>
+                <td><span class="badge" th:text="${p.statusText}"></span></td>
+                <td th:text="${#temporals.format(p.createTime, 'yyyy-MM-dd HH:mm')}"></td>
+                <td><a class="btn" th:href="@{/products/{id}(id=${p.id})}">查看</a></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(myProducts)}">
+                <td colspan="7">你还没有发布商品</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="card">
+        <h2>最近购买订单</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>订单号</th>
+                <th>商品</th>
+                <th>卖家</th>
+                <th>价格</th>
+                <th>状态</th>
+                <th>创建时间</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="o : ${buyerOrders}">
+                <td th:text="${o.id}"></td>
+                <td><a th:href="@{/products/{id}(id=${o.productId})}" th:text="${o.productTitle}"></a></td>
+                <td th:text="${o.sellerName}"></td>
+                <td class="price" th:text="'￥' + ${o.productPrice}"></td>
+                <td><span class="badge" th:text="${o.statusText}"></span></td>
+                <td th:text="${#temporals.format(o.createTime, 'yyyy-MM-dd HH:mm')}"></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(buyerOrders)}">
+                <td colspan="6">暂无购买订单</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="card">
+        <h2>最近出售订单</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>订单号</th>
+                <th>商品</th>
+                <th>买家</th>
+                <th>价格</th>
+                <th>状态</th>
+                <th>创建时间</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="o : ${sellerOrders}">
+                <td th:text="${o.id}"></td>
+                <td><a th:href="@{/products/{id}(id=${o.productId})}" th:text="${o.productTitle}"></a></td>
+                <td th:text="${o.buyerName}"></td>
+                <td class="price" th:text="'￥' + ${o.productPrice}"></td>
+                <td><span class="badge" th:text="${o.statusText}"></span></td>
+                <td th:text="${#temporals.format(o.createTime, 'yyyy-MM-dd HH:mm')}"></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(sellerOrders)}">
+                <td colspan="6">暂无出售订单</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="card">
+        <h2>我给别人的评价</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>订单号</th>
+                <th>商品</th>
+                <th>被评价人</th>
+                <th>评分</th>
+                <th>内容</th>
+                <th>评价时间</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="r : ${givenReviews}">
+                <td th:text="${r.orderId}"></td>
+                <td th:text="${r.productTitle}"></td>
+                <td th:text="${r.targetUserName}"></td>
+                <td><span class="stars" th:text="${r.score} + '分'"></span></td>
+                <td th:text="${r.content}"></td>
+                <td th:text="${#temporals.format(r.createTime, 'yyyy-MM-dd HH:mm')}"></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(givenReviews)}">
+                <td colspan="6">你还没有评价过别人</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="card">
+        <h2>别人给我的评价</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>订单号</th>
+                <th>商品</th>
+                <th>评价人</th>
+                <th>评分</th>
+                <th>内容</th>
+                <th>评价时间</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="r : ${receivedReviews}">
+                <td th:text="${r.orderId}"></td>
+                <td th:text="${r.productTitle}"></td>
+                <td th:text="${r.reviewerName}"></td>
+                <td><span class="stars" th:text="${r.score} + '分'"></span></td>
+                <td th:text="${r.content}"></td>
+                <td th:text="${#temporals.format(r.createTime, 'yyyy-MM-dd HH:mm')}"></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(receivedReviews)}">
+                <td colspan="6">暂时还没有别人给你的评价</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+</body>
+</html>

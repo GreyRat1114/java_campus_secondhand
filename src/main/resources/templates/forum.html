@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>校园论坛</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="/products">校园二手交易平台</a>
+    <nav>
+        <a href="/products">商品列表</a>
+        <a href="/forum">校园论坛</a>
+        <a th:if="${session.user != null}" href="/products/new">发布商品</a>
+        <a th:if="${session.user != null}" href="/my/posts">我的帖子</a>
+        <a th:if="${session.user != null}" href="/orders">我的订单</a>
+        <a th:if="${session.user != null}" href="/profile">个人中心</a>
+        <a th:if="${session.user != null}" href="/messages">我的消息</a>
+        <a th:if="${session.user != null}" href="/friends">好友</a>
+        <a th:if="${session.user != null and session.user.role == 'ADMIN'}" href="/admin">管理后台</a>
+        <a th:if="${session.user == null}" href="/login">登录</a>
+        <a th:if="${session.user != null}" href="/logout">退出</a>
+    </nav>
+</header>
+
+<main class="container">
+    <div class="success" th:if="${success != null}" th:text="${success}"></div>
+    <div class="error" th:if="${error != null}" th:text="${error}"></div>
+
+    <section class="card forum-header">
+        <div>
+            <h2>校园论坛</h2>
+            <p class="hint">可以发布二手交易需求，也可以进行校园交流。</p>
+        </div>
+        <div class="actions" th:if="${session.user != null}">
+            <a class="btn" href="/forum/new">我要发帖</a>
+            <a class="btn secondary" href="/my/posts">我的帖子</a>
+        </div>
+        <a class="btn" th:if="${session.user == null}" href="/login">登录后发帖</a>
+    </section>
+
+    <section class="card">
+        <form method="get" action="/forum" class="search-form">
+            <input type="text"
+                   name="keyword"
+                   placeholder="搜索帖子标题或内容"
+                   th:value="${keyword}">
+            <select name="boardId">
+                <option value="">全部板块</option>
+                <option th:each="b : ${boards}"
+                        th:value="${b.id}"
+                        th:selected="${boardId != null and boardId == b.id}"
+                        th:text="${b.name}">
+                </option>
+            </select>
+            <select name="postType">
+                <option value="">全部类型</option>
+                <option value="NEED" th:selected="${postType == 'NEED'}">交易需求</option>
+                <option value="DISCUSS" th:selected="${postType == 'DISCUSS'}">校园交流</option>
+            </select>
+            <button type="submit">搜索</button>
+        </form>
+    </section>
+
+    <section class="forum-list">
+        <article class="forum-item" th:each="p : ${posts}">
+            <div class="forum-item-main">
+                <div>
+                    <span class="badge" th:if="${p.boardName != null}" th:text="${p.boardName}"></span>
+                    <span class="badge" th:text="${p.postTypeText}"></span>
+                    <a class="forum-title"
+                       th:href="@{/forum/{id}(id=${p.id})}"
+                       th:text="${p.title}">
+                    </a>
+                </div>
+                <p class="forum-summary" th:text="${#strings.abbreviate(p.content, 120)}"></p>
+                <div class="linked-product-mini" th:if="${p.productId != null}">
+                    <span>关联商品：</span>
+                    <a th:href="@{/products/{id}(id=${p.productId})}"
+                       th:text="${p.productTitle}">
+                    </a>
+                </div>
+                <div class="forum-meta">
+                    <span>楼主：<b th:text="${p.username}"></b></span>
+                    <span>浏览：<b th:text="${p.viewCount}"></b></span>
+                    <span>回复：<b th:text="${p.commentCount}"></b></span>
+                    <span th:text="${#temporals.format(p.createTime, 'yyyy-MM-dd HH:mm')}"></span>
+                </div>
+            </div>
+        </article>
+
+        <section class="card" th:if="${#lists.isEmpty(posts)}">
+            暂无帖子，可以发布第一条帖子。
+        </section>
+    </section>
+
+    <div class="pager">
+        <a th:if="${page > 1}"
+           th:href="@{/forum(page=${page - 1}, keyword=${keyword}, postType=${postType}, boardId=${boardId})}">
+            上一页
+        </a>
+        <span th:text="'第 ' + ${page} + ' / ' + ${totalPage} + ' 页'"></span>
+        <a th:if="${page < totalPage}"
+           th:href="@{/forum(page=${page + 1}, keyword=${keyword}, postType=${postType}, boardId=${boardId})}">
+            下一页
+        </a>
+    </div>
+</main>
+</body>
+</html>

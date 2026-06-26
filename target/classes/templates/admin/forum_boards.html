@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>论坛板块管理</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="topbar admin">
+    <a class="brand" href="/admin">管理后台</a>
+    <nav>
+        <a href="/admin">后台首页</a>
+        <a href="/admin/categories">分类管理</a>
+        <a href="/admin/orders">订单管理</a>
+        <a href="/admin/reviews">评价管理</a>
+        <a href="/admin/forum/boards">板块管理</a>
+        <a href="/admin/forum/posts">帖子管理</a>
+        <a href="/admin/forum/comments">评论管理</a>
+        <a href="/forum">前台论坛</a>
+        <a href="/logout">退出</a>
+    </nav>
+</header>
+
+<main class="container">
+    <div class="success" th:if="${success != null}" th:text="${success}"></div>
+    <div class="error" th:if="${error != null}" th:text="${error}"></div>
+
+    <section class="card">
+        <h2>新增板块</h2>
+        <form method="post" action="/admin/forum/boards/create" class="form-inline">
+            <input type="text" name="name" placeholder="板块名称" required>
+            <input type="text" name="description" placeholder="板块说明">
+            <input type="number" name="sortOrder" placeholder="排序" value="0">
+            <button type="submit">添加</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2>论坛板块列表</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>名称 / 说明 / 排序</th>
+                <th>帖子数量</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="b : ${boards}">
+                <td th:text="${b.id}"></td>
+                <td>
+                    <form method="post"
+                          th:action="@{/admin/forum/boards/{id}/update(id=${b.id})}"
+                          class="form-inline">
+                        <input type="text" name="name" th:value="${b.name}" required>
+                        <input type="text" name="description" th:value="${b.description}">
+                        <input type="number" name="sortOrder" th:value="${b.sortOrder}">
+                        <button type="submit">保存</button>
+                    </form>
+                </td>
+                <td><span class="badge" th:text="${b.postCount} + ' 篇帖子'"></span></td>
+                <td><span class="badge" th:text="${b.statusText}"></span></td>
+                <td>
+                    <form method="post"
+                          th:if="${b.status == 'NORMAL'}"
+                          th:action="@{/admin/forum/boards/{id}/delete(id=${b.id})}"
+                          onsubmit="return confirm('确定删除该板块吗？板块下有帖子时不能删除。');">
+                        <button type="submit" class="danger">删除</button>
+                    </form>
+                    <span class="hint" th:if="${b.status == 'DELETED'}">已删除</span>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(boards)}">
+                <td colspan="5">暂无板块</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+</body>
+</html>

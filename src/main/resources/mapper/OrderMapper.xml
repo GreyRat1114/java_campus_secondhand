@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.secondhand.mapper.OrderMapper">
+    <sql id="orderColumns">
+        o.id, o.product_id, o.buyer_id, o.seller_id, o.order_status, o.create_time, o.finish_time,
+        p.title AS product_title,
+        p.price AS product_price,
+        (SELECT image_url FROM product_image pi WHERE pi.product_id = p.id ORDER BY pi.id LIMIT 1) AS product_image_url,
+        buyer.username AS buyer_name,
+        seller.username AS seller_name,
+        EXISTS (SELECT 1 FROM review r WHERE r.order_id = o.id) AS reviewed
+    </sql>
+
+    <insert id="insert" parameterType="OrderInfo" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO order_info(product_id, buyer_id, seller_id, order_status, create_time)
+        VALUES(#{productId}, #{buyerId}, #{sellerId}, #{orderStatus}, now())
+    </insert>
+
+    <select id="findById" resultType="OrderInfo">
+        SELECT <include refid="orderColumns" />
+        FROM order_info o
+        LEFT JOIN product p ON o.product_id = p.id
+        LEFT JOIN sys_user buyer ON o.buyer_id = buyer.id
+        LEFT JOIN sys_user seller ON o.seller_id = seller.id
+        WHERE o.id = #{id}
+    </select>
+
+    <select id="findActiveByProductId" resultType="OrderInfo">
+        SELECT <include refid="orderColumns" />
+        FROM order_info o
+        LEFT JOIN product p ON o.product_id = p.id
+        LEFT JOIN sys_user buyer ON o.buyer_id = buyer.id
+        LEFT JOIN sys_user seller ON o.seller_id = seller.id
+        WHERE o.product_id = #{productId}
+          AND o.order_status IN ('WAIT_CONFIRM', 'TRADING')
+        ORDER BY o.create_time DESC
+        LIMIT 1
+    </select>
+
+    <select id="findByBuyerId" resultType="OrderInfo">
+        SELECT <include refid="orderColumns" />
+        FROM order_info o
+        LEFT JOIN product p ON o.product_id = p.id
+        LEFT JOIN sys_user buyer ON o.buyer_id = buyer.id
+        LEFT JOIN sys_user seller ON o.seller_id = seller.id
+        WHERE o.buyer_id = #{buyerId}
+        ORDER BY o.create_time DESC
+    </select>
+
+    <select id="findBySellerId" resultType="OrderInfo">
+        SELECT <include refid="orderColumns" />
+        FROM order_info o
+        LEFT JOIN product p ON o.product_id = p.id
+        LEFT JOIN sys_user buyer ON o.buyer_id = buyer.id
+        LEFT JOIN sys_user seller ON o.seller_id = seller.id
+        WHERE o.seller_id = #{sellerId}
+        ORDER BY o.create_time DESC
+    </select>
+
+    <select id="findAll" resultType="OrderInfo">
+        SELECT <include refid="orderColumns" />
+        FROM order_info o
+        LEFT JOIN product p ON o.product_id = p.id
+        LEFT JOIN sys_user buyer ON o.buyer_id = buyer.id
+        LEFT JOIN sys_user seller ON o.seller_id = seller.id
+        ORDER BY o.create_time DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countAll" resultType="int">
+        SELECT COUNT(*) FROM order_info
+    </select>
+
+    <update id="updateStatus">
+        UPDATE order_info
+        SET order_status = #{orderStatus},
+            finish_time = CASE WHEN #{finish} THEN now() ELSE finish_time END
+        WHERE id = #{id}
+    </update>
+</mapper>

@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.secondhand.mapper.ForumMapper">
+
+    <sql id="postColumns">
+        p.id,
+        p.user_id,
+        p.title,
+        p.content,
+        p.post_type,
+        p.status,
+        p.view_count,
+        p.create_time,
+        p.update_time,
+        p.board_id,
+        p.product_id,
+        u.username,
+        u.avatar_url,
+        b.name AS board_name,
+        pr.title AS product_title,
+        (
+            SELECT image_url
+            FROM product_image pi
+            WHERE pi.product_id = pr.id
+            ORDER BY pi.id ASC
+            LIMIT 1
+        ) AS product_image_url,
+        (
+            SELECT COUNT(*)::int
+            FROM forum_comment c
+            WHERE c.post_id = p.id
+              AND c.status = 'NORMAL'
+        ) AS comment_count
+    </sql>
+
+    <insert id="insertPost" parameterType="ForumPost" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO forum_post(user_id, title, content, post_type, board_id, product_id, status, view_count, create_time, update_time)
+        VALUES(#{userId}, #{title}, #{content}, #{postType}, #{boardId}, #{productId}, 'NORMAL', 0, now(), now())
+    </insert>
+
+    <select id="findPostPage" resultType="ForumPost">
+        SELECT <include refid="postColumns" />
+        FROM forum_post p
+        LEFT JOIN sys_user u ON p.user_id = u.id
+        LEFT JOIN forum_board b ON p.board_id = b.id
+        LEFT JOIN product pr ON p.product_id = pr.id
+        WHERE p.status = 'NORMAL'
+        <if test="keyword != null and keyword != ''">
+            AND (
+                p.title ILIKE CONCAT('%', #{keyword}, '%')
+                OR p.content ILIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+        <if test="postType != null and postType != ''">
+            AND p.post_type = #{postType}
+        </if>
+        <if test="boardId != null">
+            AND p.board_id = #{boardId}
+        </if>
+        ORDER BY p.create_time DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPostPage" resultType="int">
+        SELECT COUNT(*)
+        FROM forum_post p
+        WHERE p.status = 'NORMAL'
+        <if test="keyword != null and keyword != ''">
+            AND (
+                p.title ILIKE CONCAT('%', #{keyword}, '%')
+                OR p.content ILIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+        <if test="postType != null and postType != ''">
+            AND p.post_type = #{postType}
+        </if>
+        <if test="boardId != null">
+            AND p.board_id = #{boardId}
+        </if>
+    </select>
+
+    <select id="findPostById" resultType="ForumPost">
+        SELECT <include refid="postColumns" />
+        FROM forum_post p
+        LEFT JOIN sys_user u ON p.user_id = u.id
+        LEFT JOIN forum_board b ON p.board_id = b.id
+        LEFT JOIN product pr ON p.product_id = pr.id
+        WHERE p.id = #{id}
+          AND p.status = 'NORMAL'
+    </select>
+
+    <update id="increaseViewCount">
+        UPDATE forum_post
+        SET view_count = view_count + 1
+        WHERE id = #{id}
+    </update>
+
+    <insert id="insertComment" parameterType="ForumComment" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO forum_comment(post_id, user_id, parent_id, content, status, create_time)
+        VALUES(#{postId}, #{userId}, #{parentId}, #{content}, 'NORMAL', now())
+    </insert>
+
+    <select id="findCommentsByPostId" resultType="ForumComment">
+        SELECT
+            c.id,
+            c.post_id,
+            c.user_id,
+            c.parent_id,
+            c.content,
+            c.status,
+            c.create_time,
+            u.username,
+            u.avatar_url
+        FROM forum_comment c
+        LEFT JOIN sys_user u ON c.user_id = u.id
+        WHERE c.post_id = #{postId}
+          AND c.status = 'NORMAL'
+        ORDER BY c.create_time ASC
+    </select>
+
+    <select id="findPostsByUserId" resultType="ForumPost">
+        SELECT <include refid="postColumns" />
+        FROM forum_post p
+        LEFT JOIN sys_user u ON p.user_id = u.id
+        LEFT JOIN forum_board b ON p.board_id = b.id
+        LEFT JOIN product pr ON p.product_id = pr.id
+        WHERE p.user_id = #{userId}
+          AND p.status = 'NORMAL'
+        ORDER BY p.create_time DESC
+    </select>
+
+    <update id="updatePost" parameterType="ForumPost">
+        UPDATE forum_post
+        SET title = #{title},
+            content = #{content},
+            post_type = #{postType},
+            board_id = #{boardId},
+            product_id = #{productId},
+            update_time = now()
+        WHERE id = #{id}
+          AND user_id = #{userId}
+          AND status = 'NORMAL'
+    </update>
+
+    <update id="deletePostByOwner">
+        UPDATE forum_post
+        SET status = 'DELETED',
+            update_time = now()
+        WHERE id = #{id}
+          AND user_id = #{userId}
+          AND status = 'NORMAL'
+    </update>
+
+    <select id="findAdminPostPage" resultType="ForumPost">
+        SELECT <include refid="postColumns" />
+        FROM forum_post p
+        LEFT JOIN sys_user u ON p.user_id = u.id
+        LEFT JOIN forum_board b ON p.board_id = b.id
+        LEFT JOIN product pr ON p.product_id = pr.id
+        WHERE 1 = 1
+        <if test="keyword != null and keyword != ''">
+            AND (
+                p.title ILIKE CONCAT('%', #{keyword}, '%')
+                OR p.content ILIKE CONCAT('%', #{keyword}, '%')
+                OR u.username ILIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+        <if test="postType != null and postType != ''">
+            AND p.post_type = #{postType}
+        </if>
+        <if test="status != null and status != ''">
+            AND p.status = #{status}
+        </if>
+        ORDER BY p.create_time DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countAdminPostPage" resultType="int">
+        SELECT COUNT(*)
+        FROM forum_post p
+        LEFT JOIN sys_user u ON p.user_id = u.id
+        WHERE 1 = 1
+        <if test="keyword != null and keyword != ''">
+            AND (
+                p.title ILIKE CONCAT('%', #{keyword}, '%')
+                OR p.content ILIKE CONCAT('%', #{keyword}, '%')
+                OR u.username ILIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+        <if test="postType != null and postType != ''">
+            AND p.post_type = #{postType}
+        </if>
+        <if test="status != null and status != ''">
+            AND p.status = #{status}
+        </if>
+    </select>
+
+    <update id="adminDeletePost">
+        UPDATE forum_post
+        SET status = 'DELETED',
+            update_time = now()
+        WHERE id = #{id}
+    </update>
+
+    <select id="findAdminCommentPage" resultType="ForumComment">
+        SELECT
+            c.id,
+            c.post_id,
+            c.user_id,
+            c.parent_id,
+            c.content,
+            c.status,
+            c.create_time,
+            u.username,
+            u.avatar_url,
+            p.title AS post_title
+        FROM forum_comment c
+        LEFT JOIN sys_user u ON c.user_id = u.id
+        LEFT JOIN forum_post p ON c.post_id = p.id
+        WHERE 1 = 1
+        <if test="keyword != null and keyword != ''">
+            AND (
+                c.content ILIKE CONCAT('%', #{keyword}, '%')
+                OR u.username ILIKE CONCAT('%', #{keyword}, '%')
+                OR p.title ILIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+        <if test="status != null and status != ''">
+            AND c.status = #{status}
+        </if>
+        ORDER BY c.create_time DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countAdminCommentPage" resultType="int">
+        SELECT COUNT(*)
+        FROM forum_comment c
+        LEFT JOIN sys_user u ON c.user_id = u.id
+        LEFT JOIN forum_post p ON c.post_id = p.id
+        WHERE 1 = 1
+        <if test="keyword != null and keyword != ''">
+            AND (
+                c.content ILIKE CONCAT('%', #{keyword}, '%')
+                OR u.username ILIKE CONCAT('%', #{keyword}, '%')
+                OR p.title ILIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+        <if test="status != null and status != ''">
+            AND c.status = #{status}
+        </if>
+    </select>
+
+    <update id="adminDeleteComment">
+        UPDATE forum_comment
+        SET status = 'DELETED'
+        WHERE id = #{id}
+    </update>
+
+    <select id="findTopCommentsByPostId" resultType="ForumComment">
+        SELECT
+            c.id,
+            c.post_id,
+            c.user_id,
+            c.parent_id,
+            c.content,
+            c.status,
+            c.create_time,
+            u.username,
+            u.avatar_url,
+            (
+                SELECT COUNT(*)::int
+                FROM forum_comment_like l
+                WHERE l.comment_id = c.id
+            ) AS like_count,
+            <choose>
+                <when test="currentUserId == null">
+                    false
+                </when>
+                <otherwise>
+                    EXISTS (
+                    SELECT 1
+                    FROM forum_comment_like l
+                    WHERE l.comment_id = c.id
+                      AND l.user_id = #{currentUserId}
+                    )
+                </otherwise>
+            </choose> AS liked_by_me
+        FROM forum_comment c
+        LEFT JOIN sys_user u ON c.user_id = u.id
+        WHERE c.post_id = #{postId}
+          AND c.parent_id IS NULL
+          AND c.status = 'NORMAL'
+        ORDER BY c.create_time ASC, c.id ASC
+    </select>
+
+    <select id="findChildCommentsByPostId" resultType="ForumComment">
+        SELECT
+            c.id,
+            c.post_id,
+            c.user_id,
+            c.parent_id,
+            c.content,
+            c.status,
+            c.create_time,
+            u.username,
+            u.avatar_url,
+            (
+                SELECT COUNT(*)::int
+                FROM forum_comment_like l
+                WHERE l.comment_id = c.id
+            ) AS like_count,
+            <choose>
+                <when test="currentUserId == null">
+                    false
+                </when>
+                <otherwise>
+                    EXISTS (
+                    SELECT 1
+                    FROM forum_comment_like l
+                    WHERE l.comment_id = c.id
+                      AND l.user_id = #{currentUserId}
+                    )
+                </otherwise>
+            </choose> AS liked_by_me
+        FROM forum_comment c
+        LEFT JOIN sys_user u ON c.user_id = u.id
+        WHERE c.post_id = #{postId}
+          AND c.parent_id IS NOT NULL
+          AND c.status = 'NORMAL'
+        ORDER BY c.create_time ASC, c.id ASC
+    </select>
+
+    <select id="findCommentById" resultType="ForumComment">
+        SELECT
+            c.id,
+            c.post_id,
+            c.user_id,
+            c.parent_id,
+            c.content,
+            c.status,
+            c.create_time,
+            u.username,
+            u.avatar_url
+        FROM forum_comment c
+        LEFT JOIN sys_user u ON c.user_id = u.id
+        WHERE c.id = #{id}
+          AND c.status = 'NORMAL'
+    </select>
+
+    <insert id="insertCommentLike">
+        INSERT INTO forum_comment_like(comment_id, user_id, create_time)
+        VALUES(#{commentId}, #{userId}, now())
+        ON CONFLICT(comment_id, user_id) DO NOTHING
+    </insert>
+
+    <delete id="deleteCommentLike">
+        DELETE FROM forum_comment_like
+        WHERE comment_id = #{commentId}
+          AND user_id = #{userId}
+    </delete>
+
+    <select id="existsCommentLike" resultType="int">
+        SELECT COUNT(*)
+        FROM forum_comment_like
+        WHERE comment_id = #{commentId}
+          AND user_id = #{userId}
+    </select>
+
+</mapper>

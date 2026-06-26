@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.secondhand.mapper.ReviewMapper">
+    <sql id="reviewColumns">
+        r.id, r.order_id, r.reviewer_id, r.target_user_id, r.score, r.content, r.create_time,
+        reviewer.username AS reviewer_name,
+        target.username AS target_user_name,
+        p.title AS product_title
+    </sql>
+
+    <insert id="insert" parameterType="Review" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO review(order_id, reviewer_id, target_user_id, score, content, create_time)
+        VALUES(#{orderId}, #{reviewerId}, #{targetUserId}, #{score}, #{content}, now())
+    </insert>
+
+    <select id="findByOrderId" resultType="Review">
+        SELECT <include refid="reviewColumns" />
+        FROM review r
+        LEFT JOIN sys_user reviewer ON r.reviewer_id = reviewer.id
+        LEFT JOIN sys_user target ON r.target_user_id = target.id
+        LEFT JOIN order_info o ON r.order_id = o.id
+        LEFT JOIN product p ON o.product_id = p.id
+        WHERE r.order_id = #{orderId}
+    </select>
+
+    <select id="findByTargetUserId" resultType="Review">
+        SELECT <include refid="reviewColumns" />
+        FROM review r
+        LEFT JOIN sys_user reviewer ON r.reviewer_id = reviewer.id
+        LEFT JOIN sys_user target ON r.target_user_id = target.id
+        LEFT JOIN order_info o ON r.order_id = o.id
+        LEFT JOIN product p ON o.product_id = p.id
+        WHERE r.target_user_id = #{targetUserId}
+        ORDER BY r.create_time DESC
+    </select>
+
+    <select id="findByReviewerId" resultType="Review">
+        SELECT <include refid="reviewColumns" />
+        FROM review r
+        LEFT JOIN sys_user reviewer ON r.reviewer_id = reviewer.id
+        LEFT JOIN sys_user target ON r.target_user_id = target.id
+        LEFT JOIN order_info o ON r.order_id = o.id
+        LEFT JOIN product p ON o.product_id = p.id
+        WHERE r.reviewer_id = #{reviewerId}
+        ORDER BY r.create_time DESC
+    </select>
+
+    <select id="findAll" resultType="Review">
+        SELECT <include refid="reviewColumns" />
+        FROM review r
+        LEFT JOIN sys_user reviewer ON r.reviewer_id = reviewer.id
+        LEFT JOIN sys_user target ON r.target_user_id = target.id
+        LEFT JOIN order_info o ON r.order_id = o.id
+        LEFT JOIN product p ON o.product_id = p.id
+        ORDER BY r.create_time DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countAll" resultType="int">
+        SELECT COUNT(*) FROM review
+    </select>
+</mapper>

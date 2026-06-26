@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>论坛帖子管理</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="topbar admin">
+    <a class="brand" href="/admin">管理后台</a>
+    <nav>
+        <a href="/admin">后台首页</a>
+        <a href="/admin/categories">分类管理</a>
+        <a href="/admin/orders">订单管理</a>
+        <a href="/admin/reviews">评价管理</a>
+        <a href="/admin/forum/boards">板块管理</a>
+        <a href="/admin/forum/posts">帖子管理</a>
+        <a href="/admin/forum/comments">评论管理</a>
+        <a href="/forum">前台论坛</a>
+        <a href="/products">前台商品</a>
+        <a href="/logout">退出</a>
+    </nav>
+</header>
+
+<main class="container">
+    <div class="success" th:if="${success != null}" th:text="${success}"></div>
+    <div class="error" th:if="${error != null}" th:text="${error}"></div>
+
+    <section class="card">
+        <h2>论坛帖子管理</h2>
+
+        <form method="get" action="/admin/forum/posts" class="search-form">
+            <input type="text"
+                   name="keyword"
+                   placeholder="搜索标题、内容、发帖人"
+                   th:value="${keyword}">
+
+            <select name="postType">
+                <option value="">全部类型</option>
+                <option value="NEED" th:selected="${postType == 'NEED'}">交易需求</option>
+                <option value="DISCUSS" th:selected="${postType == 'DISCUSS'}">校园交流</option>
+            </select>
+
+            <select name="status">
+                <option value="">全部状态</option>
+                <option value="NORMAL" th:selected="${status == 'NORMAL'}">正常</option>
+                <option value="DELETED" th:selected="${status == 'DELETED'}">已删除</option>
+            </select>
+
+            <button type="submit">筛选</button>
+        </form>
+
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>类型</th>
+                <th>标题</th>
+                <th>发帖人</th>
+                <th>浏览</th>
+                <th>回复</th>
+                <th>状态</th>
+                <th>发布时间</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${posts}">
+                <td th:text="${p.id}"></td>
+                <td><span class="badge" th:text="${p.postTypeText}"></span></td>
+                <td>
+                    <a th:if="${p.status == 'NORMAL'}"
+                       th:href="@{/forum/{id}(id=${p.id})}"
+                       th:text="${p.title}"></a>
+                    <span th:if="${p.status != 'NORMAL'}"
+                          th:text="${p.title}"></span>
+                </td>
+                <td th:text="${p.username}"></td>
+                <td th:text="${p.viewCount}"></td>
+                <td th:text="${p.commentCount}"></td>
+                <td><span class="badge" th:text="${p.statusText}"></span></td>
+                <td th:text="${#temporals.format(p.createTime, 'yyyy-MM-dd HH:mm')}"></td>
+                <td class="actions">
+                    <a class="btn"
+                       th:if="${p.status == 'NORMAL'}"
+                       th:href="@{/forum/{id}(id=${p.id})}">查看</a>
+                    <form method="post"
+                          th:if="${p.status == 'NORMAL'}"
+                          th:action="@{/admin/forum/posts/{id}/delete(id=${p.id})}"
+                          onsubmit="return confirm('确定要删除这个帖子吗？');">
+                        <input type="hidden" name="page" th:value="${page}">
+                        <input type="hidden" name="keyword" th:value="${keyword}">
+                        <input type="hidden" name="postType" th:value="${postType}">
+                        <input type="hidden" name="status" th:value="${status}">
+                        <button type="submit" class="danger">删除</button>
+                    </form>
+                    <span class="hint" th:if="${p.status == 'DELETED'}">已删除</span>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(posts)}">
+                <td colspan="9">暂无帖子数据</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="pager">
+            <a th:if="${page > 1}"
+               th:href="@{/admin/forum/posts(page=${page - 1}, keyword=${keyword}, postType=${postType}, status=${status})}">上一页</a>
+            <span th:text="'第 ' + ${page} + ' / ' + ${totalPage} + ' 页'"></span>
+            <a th:if="${page < totalPage}"
+               th:href="@{/admin/forum/posts(page=${page + 1}, keyword=${keyword}, postType=${postType}, status=${status})}">下一页</a>
+        </div>
+    </section>
+</main>
+</body>
+</html>

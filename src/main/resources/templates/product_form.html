@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>发布商品</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" href="/products">校园二手交易平台</a>
+    <nav><a href="/products">返回列表</a></nav>
+</header>
+<main class="container small">
+    <section class="card">
+        <h2>发布商品</h2>
+        <div class="error" th:text="${error}"></div>
+        <form method="post" action="/products" enctype="multipart/form-data" class="form-vertical">
+            <label>商品标题</label>
+            <input name="title" required>
+
+            <label>价格</label>
+            <input name="price" type="number" step="0.01" min="0.01" required>
+
+            <label>分类</label>
+            <select name="categoryId" required>
+                <option value="">请选择分类</option>
+                <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}"></option>
+            </select>
+
+            <label>商品描述</label>
+            <textarea name="description" rows="5" placeholder="例如：教材几乎全新、可校内面交"></textarea>
+
+            <label>商品图片</label>
+            <input type="file" name="image" accept="image/*">
+
+            <button type="submit">提交审核</button>
+        </form>
+    </section>
+</main>
+</body>
+</html>
