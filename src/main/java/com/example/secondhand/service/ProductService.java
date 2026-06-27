@@ -1,6 +1,8 @@
 package com.example.secondhand.service;
 
+import com.example.secondhand.config.UploadPaths;
 import com.example.secondhand.entity.Product;
+import com.example.secondhand.entity.User;
 import com.example.secondhand.mapper.ProductMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,7 +14,6 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.UUID;
@@ -34,12 +35,32 @@ public class ProductService {
         return productMapper.countPage(keyword, categoryId, status);
     }
 
+    public List<Product> findAdminPage(String keyword, Long categoryId, String status, int page, int size) {
+        int offset = Math.max(page - 1, 0) * size;
+        return productMapper.findAdminPage(keyword, categoryId, status, offset, size);
+    }
+
+    public int countAdminPage(String keyword, Long categoryId, String status) {
+        return productMapper.countAdminPage(keyword, categoryId, status);
+    }
+
     public Product findById(Long id) {
         return productMapper.findById(id);
     }
 
     public List<Product> findBySellerId(Long sellerId) {
         return productMapper.findBySellerId(sellerId);
+    }
+
+    public List<Product> findRecommendProducts(User user, int size) {
+        Long userId = user == null ? null : user.getId();
+        if (userId != null) {
+            List<Product> recommended = productMapper.findRecommendedByBuyer(userId, size);
+            if (recommended != null && !recommended.isEmpty()) {
+                return recommended;
+            }
+        }
+        return productMapper.findFallbackRecommendations(userId, size);
     }
 
     @Transactional
@@ -65,22 +86,49 @@ public class ProductService {
             suffix = original.substring(original.lastIndexOf('.'));
         }
         String filename = UUID.randomUUID().toString().replace("-", "") + suffix;
-        Path dir = Paths.get(System.getProperty("user.dir"), "uploads", "product").toAbsolutePath().normalize();
-        Path target = dir.resolve(filename);
-        try (InputStream inputStream = image.getInputStream()) {
-            Files.createDirectories(dir);
-            Files.copy(inputStream, target, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new IllegalStateException("图片上传失败，请检查图片文件后重试", e);
+        IOException lastIoException = null;
+        SecurityException lastSecurityException = null;
+
+        for (Path root : UploadPaths.uploadRoots()) {
+            Path dir = root.resolve("product").toAbsolutePath().normalize();
+            Path target = dir.resolve(filename);
+            try (InputStream inputStream = image.getInputStream()) {
+                Files.createDirectories(dir);
+                Files.copy(inputStream, target, StandardCopyOption.REPLACE_EXISTING);
+                return "/uploads/product/" + filename;
+            } catch (IOException e) {
+                lastIoException = e;
+            } catch (SecurityException e) {
+                lastSecurityException = e;
+            }
         }
-        return "/uploads/product/" + filename;
+
+        if (lastIoException != null) {
+            throw new IllegalStateException("图片上传失败，请检查上传目录权限后重试", lastIoException);
+        }
+        if (lastSecurityException != null) {
+            throw new IllegalStateException("图片上传失败，请检查上传目录权限后重试", lastSecurityException);
+        }
+        throw new IllegalStateException("图片上传失败，请检查图片文件后重试");
     }
 
     public void approve(Long id) {
-        productMapper.updateStatus(id, "ON_SALE");
+        approveProduct(id);
     }
 
     public void reject(Long id) {
+        rejectProduct(id);
+    }
+
+    public void approveProduct(Long id) {
+        productMapper.updateStatus(id, "ON_SALE");
+    }
+
+    public void rejectProduct(Long id) {
         productMapper.updateStatus(id, "REJECTED");
+    }
+
+    public void offShelfProduct(Long id) {
+        productMapper.updateStatus(id, "OFF_SHELF");
     }
 }

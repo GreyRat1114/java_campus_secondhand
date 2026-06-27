@@ -1,50 +1,57 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>商品列表</title>
+    <title>商品市场 - 校园二手交易平台</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<header class="topbar">
-    <a class="brand" href="/products">校园二手交易平台</a>
-    <nav>
-        <a href="/products/new">发布商品</a>
-        <a href="/forum">校园论坛</a>
-        <a th:if="${session.user != null}" href="/my/posts">我的帖子</a>
-        <a th:if="${session.user != null}" href="/orders">我的订单</a>
-        <a th:if="${session.user != null}" href="/profile">个人中心</a>
-        <a th:if="${session.user != null}" href="/messages">我的消息</a>
-        <a th:if="${session.user != null}" href="/friends">好友</a>
-        <a th:if="${session.user != null and session.user.role == 'ADMIN'}" href="/admin">管理后台</a>
-        <a th:if="${session.user == null}" href="/login">登录</a>
-        <a th:if="${session.user != null}" href="/logout">退出</a>
-    </nav>
-</header>
+<header th:replace="~{fragments/nav :: main('products')}"></header>
 
-<main class="container">
-    <section class="card">
-        <h2>二手商品</h2>
-        <form class="search-form" method="get" action="/products">
-            <input name="keyword" placeholder="搜索商品标题/描述" th:value="${keyword}">
-            <select name="categoryId">
-                <option value="">全部分类</option>
-                <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}"
-                        th:selected="${categoryId != null and categoryId == c.id}"></option>
-            </select>
+<main class="container wide market-page slide-world">
+    <section class="market-header">
+        <div>
+            <span class="stage-kicker">Student market</span>
+            <h1>二手商品</h1>
+            <p>把校园里的闲置物品做成一面可搜索、可筛选、可直接交易的市集墙。</p>
+            <div class="actions" th:if="${session.user != null}">
+                <a class="btn btn-arrow" href="/products/new"><span>发布商品</span><i>›</i></a>
+                <a class="btn secondary btn-arrow" href="/recommendations"><span>为你推荐</span><i>›</i></a>
+            </div>
+        </div>
+
+        <form class="search-form market-search" method="get" action="/products">
+            <label>
+                <span>关键词</span>
+                <input name="keyword" placeholder="搜索商品标题或描述" th:value="${keyword}">
+            </label>
+            <label>
+                <span>分类</span>
+                <select name="categoryId">
+                    <option value="">全部分类</option>
+                    <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}"
+                            th:selected="${categoryId != null and categoryId == c.id}"></option>
+                </select>
+            </label>
             <button type="submit">查询</button>
         </form>
     </section>
 
-    <section class="grid">
-        <div class="product-card" th:each="p : ${products}">
-            <img th:if="${p.mainImageUrl != null}" th:src="${p.mainImageUrl}" alt="商品图片">
-            <div class="no-img" th:if="${p.mainImageUrl == null}">暂无图片</div>
-            <h3 th:text="${p.title}">商品标题</h3>
-            <p class="price" th:text="'￥' + ${p.price}">￥0</p>
-            <p class="meta"><span th:text="${p.categoryName}"></span> · 卖家：<span th:text="${p.sellerName}"></span></p>
-            <a class="btn" th:href="@{/products/{id}(id=${p.id})}">查看详情</a>
-        </div>
+    <section class="product-gallery">
+        <article class="product-card gallery-card" th:each="p : ${products}">
+            <div class="product-media">
+                <img th:if="${p.mainImageUrl != null}" th:src="${p.mainImageUrl}" alt="商品图片">
+                <div class="no-img" th:if="${p.mainImageUrl == null}">暂无图片</div>
+            </div>
+            <div class="gallery-card-body">
+                <p class="meta"><span th:text="${p.categoryName}"></span> · 卖家：<span th:text="${p.sellerName}"></span></p>
+                <h3 th:text="${p.title}">商品标题</h3>
+                <div class="gallery-card-foot">
+                    <p class="price" th:text="'￥' + ${p.price}">￥0</p>
+                    <a class="btn btn-arrow" th:href="@{/products/{id}(id=${p.id})}"><span>详情</span><i>›</i></a>
+                </div>
+            </div>
+        </article>
     </section>
 
     <div class="pager">
@@ -53,5 +60,6 @@
         <a th:if="${page < totalPage}" th:href="@{/products(page=${page + 1}, keyword=${keyword}, categoryId=${categoryId})}">下一页</a>
     </div>
 </main>
+<script th:src="@{/js/page-effects.js}"></script>
 </body>
 </html>

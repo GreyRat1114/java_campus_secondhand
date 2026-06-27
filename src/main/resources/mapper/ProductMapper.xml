@@ -74,4 +74,132 @@
     <update id="updateStatus">
         UPDATE product SET status = #{status} WHERE id = #{id}
     </update>
+
+    <select id="findAdminPage" resultType="Product">
+        SELECT <include refid="productColumns" />
+        FROM product p
+        LEFT JOIN category c ON p.category_id = c.id
+        LEFT JOIN sys_user u ON p.seller_id = u.id
+        WHERE 1 = 1
+        <if test="keyword != null and keyword != ''">
+            AND (
+                p.title ILIKE CONCAT('%', #{keyword}, '%')
+                OR p.description ILIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+        <if test="categoryId != null">
+            AND p.category_id = #{categoryId}
+        </if>
+        <if test="status != null and status != ''">
+            AND p.status = #{status}
+        </if>
+        ORDER BY p.create_time DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countAdminPage" resultType="int">
+        SELECT COUNT(*)
+        FROM product p
+        WHERE 1 = 1
+        <if test="keyword != null and keyword != ''">
+            AND (
+                p.title ILIKE CONCAT('%', #{keyword}, '%')
+                OR p.description ILIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+        <if test="categoryId != null">
+            AND p.category_id = #{categoryId}
+        </if>
+        <if test="status != null and status != ''">
+            AND p.status = #{status}
+        </if>
+    </select>
+
+    <select id="findRecommendedByBuyer" resultType="Product">
+        WITH bought_category AS (
+            SELECT
+                p.category_id,
+                COUNT(*)::int AS buy_count
+            FROM order_info o
+            LEFT JOIN product p ON o.product_id = p.id
+            WHERE o.buyer_id = #{userId}
+              AND o.order_status = 'FINISHED'
+              AND p.category_id IS NOT NULL
+            GROUP BY p.category_id
+        )
+        SELECT
+            p.id,
+            p.title,
+            p.description,
+            p.price,
+            p.category_id,
+            p.seller_id,
+            p.status,
+            p.create_time,
+            c.name AS category_name,
+            seller.username AS seller_name,
+            (
+                SELECT pi.image_url
+                FROM product_image pi
+                WHERE pi.product_id = p.id
+                ORDER BY pi.id ASC
+                LIMIT 1
+            ) AS main_image_url,
+            CONCAT('你购买过 ', c.name, ' 类商品') AS recommend_reason,
+            bc.buy_count AS recommend_score
+        FROM product p
+        INNER JOIN bought_category bc ON p.category_id = bc.category_id
+        LEFT JOIN category c ON p.category_id = c.id
+        LEFT JOIN sys_user seller ON p.seller_id = seller.id
+        WHERE p.status = 'ON_SALE'
+          AND p.seller_id &lt;&gt; #{userId}
+          AND NOT EXISTS (
+              SELECT 1
+              FROM order_info o2
+              WHERE o2.product_id = p.id
+                AND o2.buyer_id = #{userId}
+                AND o2.order_status IN ('WAIT_CONFIRM', 'TRADING', 'FINISHED')
+          )
+        ORDER BY bc.buy_count DESC, p.create_time DESC
+        LIMIT #{size}
+    </select>
+
+    <select id="findFallbackRecommendations" resultType="Product">
+        SELECT
+            p.id,
+            p.title,
+            p.description,
+            p.price,
+            p.category_id,
+            p.seller_id,
+            p.status,
+            p.create_time,
+            c.name AS category_name,
+            seller.username AS seller_name,
+            (
+                SELECT pi.image_url
+                FROM product_image pi
+                WHERE pi.product_id = p.id
+                ORDER BY pi.id ASC
+                LIMIT 1
+            ) AS main_image_url,
+            '近期在售商品推荐' AS recommend_reason,
+            0 AS recommend_score
+        FROM product p
+        LEFT JOIN category c ON p.category_id = c.id
+        LEFT JOIN sys_user seller ON p.seller_id = seller.id
+        WHERE p.status = 'ON_SALE'
+        <if test="userId != null">
+            AND p.seller_id &lt;&gt; #{userId}
+            AND NOT EXISTS (
+                SELECT 1
+                FROM order_info o2
+                WHERE o2.product_id = p.id
+                  AND o2.buyer_id = #{userId}
+                  AND o2.order_status IN ('WAIT_CONFIRM', 'TRADING', 'FINISHED')
+            )
+        </if>
+        ORDER BY p.create_time DESC
+        LIMIT #{size}
+    </select>
 </mapper>

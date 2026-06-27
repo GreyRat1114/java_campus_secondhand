@@ -1,69 +1,64 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>校园论坛</title>
+    <title>校园论坛 - 校园二手交易平台</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<header class="topbar">
-    <a class="brand" href="/products">校园二手交易平台</a>
-    <nav>
-        <a href="/products">商品列表</a>
-        <a href="/forum">校园论坛</a>
-        <a th:if="${session.user != null}" href="/products/new">发布商品</a>
-        <a th:if="${session.user != null}" href="/my/posts">我的帖子</a>
-        <a th:if="${session.user != null}" href="/orders">我的订单</a>
-        <a th:if="${session.user != null}" href="/profile">个人中心</a>
-        <a th:if="${session.user != null}" href="/messages">我的消息</a>
-        <a th:if="${session.user != null}" href="/friends">好友</a>
-        <a th:if="${session.user != null and session.user.role == 'ADMIN'}" href="/admin">管理后台</a>
-        <a th:if="${session.user == null}" href="/login">登录</a>
-        <a th:if="${session.user != null}" href="/logout">退出</a>
-    </nav>
-</header>
+<header th:replace="~{fragments/nav :: main('forum')}"></header>
 
-<main class="container">
+<main class="container wide forum-page slide-world">
     <div class="success" th:if="${success != null}" th:text="${success}"></div>
     <div class="error" th:if="${error != null}" th:text="${error}"></div>
 
-    <section class="card forum-header">
+    <section class="forum-stage">
         <div>
-            <h2>校园论坛</h2>
-            <p class="hint">可以发布二手交易需求，也可以进行校园交流。</p>
+            <span class="stage-kicker">Campus forum</span>
+            <h1>校园论坛</h1>
+            <p>把交易需求、经验交流和商品讨论放在一起，让帖子不只是列表，而像一张校园消息墙。</p>
         </div>
         <div class="actions" th:if="${session.user != null}">
-            <a class="btn" href="/forum/new">我要发帖</a>
-            <a class="btn secondary" href="/my/posts">我的帖子</a>
+            <a class="btn btn-arrow" href="/forum/new"><span>我要发帖</span><i>›</i></a>
+            <a class="btn secondary btn-arrow" href="/my/posts"><span>我的帖子</span><i>›</i></a>
         </div>
-        <a class="btn" th:if="${session.user == null}" href="/login">登录后发帖</a>
+        <a class="btn btn-arrow" th:if="${session.user == null}" href="/login"><span>登录后发帖</span><i>›</i></a>
     </section>
 
-    <section class="card">
-        <form method="get" action="/forum" class="search-form">
-            <input type="text"
-                   name="keyword"
-                   placeholder="搜索帖子标题或内容"
-                   th:value="${keyword}">
-            <select name="boardId">
-                <option value="">全部板块</option>
-                <option th:each="b : ${boards}"
-                        th:value="${b.id}"
-                        th:selected="${boardId != null and boardId == b.id}"
-                        th:text="${b.name}">
-                </option>
-            </select>
-            <select name="postType">
-                <option value="">全部类型</option>
-                <option value="NEED" th:selected="${postType == 'NEED'}">交易需求</option>
-                <option value="DISCUSS" th:selected="${postType == 'DISCUSS'}">校园交流</option>
-            </select>
+    <section class="forum-search-panel">
+        <form method="get" action="/forum" class="search-form market-search">
+            <label>
+                <span>关键词</span>
+                <input type="text"
+                       name="keyword"
+                       placeholder="搜索帖子标题或内容"
+                       th:value="${keyword}">
+            </label>
+            <label>
+                <span>板块</span>
+                <select name="boardId">
+                    <option value="">全部板块</option>
+                    <option th:each="b : ${boards}"
+                            th:value="${b.id}"
+                            th:selected="${boardId != null and boardId == b.id}"
+                            th:text="${b.name}">
+                    </option>
+                </select>
+            </label>
+            <label>
+                <span>类型</span>
+                <select name="postType">
+                    <option value="">全部类型</option>
+                    <option value="NEED" th:selected="${postType == 'NEED'}">交易需求</option>
+                    <option value="DISCUSS" th:selected="${postType == 'DISCUSS'}">校园交流</option>
+                </select>
+            </label>
             <button type="submit">搜索</button>
         </form>
     </section>
 
     <section class="forum-list">
-        <article class="forum-item" th:each="p : ${posts}">
+        <article class="forum-item forum-thread" th:each="p : ${posts}">
             <div class="forum-item-main">
                 <div>
                     <span class="badge" th:if="${p.boardName != null}" th:text="${p.boardName}"></span>
@@ -106,5 +101,6 @@
         </a>
     </div>
 </main>
+<script th:src="@{/js/page-effects.js}"></script>
 </body>
 </html>

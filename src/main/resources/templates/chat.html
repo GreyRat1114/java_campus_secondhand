@@ -1,23 +1,12 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>私聊</title>
+    <title>私聊 - 校园二手交易平台</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<header class="topbar">
-    <a class="brand" href="/products">校园二手交易平台</a>
-    <nav>
-        <a href="/products">商品列表</a>
-        <a href="/forum">校园论坛</a>
-        <a href="/orders">我的订单</a>
-        <a href="/profile">个人中心</a>
-        <a href="/messages">我的消息</a>
-        <a href="/friends">好友</a>
-        <a href="/logout">退出</a>
-    </nav>
-</header>
+<header th:replace="~{fragments/nav :: main('messages')}"></header>
 
 <main class="container small">
     <section class="card">
@@ -213,3 +202,4 @@
 </script>
 </body>
 </html>
+

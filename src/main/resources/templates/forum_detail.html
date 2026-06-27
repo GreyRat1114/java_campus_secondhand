@@ -1,25 +1,12 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title th:text="${post.title}">帖子详情</title>
+    <title>帖子详情 - 校园二手交易平台</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<header class="topbar">
-    <a class="brand" href="/products">校园二手交易平台</a>
-    <nav>
-        <a href="/products">商品列表</a>
-        <a href="/forum">校园论坛</a>
-        <a th:if="${session.user != null}" href="/forum/new">我要发帖</a>
-        <a th:if="${session.user != null}" href="/my/posts">我的帖子</a>
-        <a th:if="${session.user != null}" href="/profile">个人中心</a>
-        <a th:if="${session.user != null}" href="/messages">我的消息</a>
-        <a th:if="${session.user != null}" href="/friends">好友</a>
-        <a th:if="${session.user == null}" href="/login">登录</a>
-        <a th:if="${session.user != null}" href="/logout">退出</a>
-    </nav>
-</header>
+<header th:replace="~{fragments/nav :: main('forum')}"></header>
 
 <main class="container">
     <div class="success" th:if="${success != null}" th:text="${success}"></div>
@@ -181,3 +168,4 @@
 </main>
 </body>
 </html>
+

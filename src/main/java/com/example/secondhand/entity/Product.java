@@ -17,6 +17,8 @@ public class Product {
     private String categoryName;
     private String sellerName;
     private String mainImageUrl;
+    private String recommendReason;
+    private Integer recommendScore;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -40,6 +42,10 @@ public class Product {
     public void setSellerName(String sellerName) { this.sellerName = sellerName; }
     public String getMainImageUrl() { return mainImageUrl; }
     public void setMainImageUrl(String mainImageUrl) { this.mainImageUrl = mainImageUrl; }
+    public String getRecommendReason() { return recommendReason; }
+    public void setRecommendReason(String recommendReason) { this.recommendReason = recommendReason; }
+    public Integer getRecommendScore() { return recommendScore; }
+    public void setRecommendScore(Integer recommendScore) { this.recommendScore = recommendScore; }
 
     public String getStatusText() {
         if ("PENDING".equals(status)) return "待审核";

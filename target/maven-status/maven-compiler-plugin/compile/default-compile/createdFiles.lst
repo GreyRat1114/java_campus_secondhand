@@ -1,10 +1,14 @@
+com\example\secondhand\controller\RecommendationController.class
+com\example\secondhand\config\UploadPaths.class
 com\example\secondhand\controller\ForumController.class
 com\example\secondhand\entity\PrivateMessage.class
 com\example\secondhand\entity\FollowInfo.class
+com\example\secondhand\controller\AdminProductController.class
 com\example\secondhand\controller\MessageController.class
 com\example\secondhand\controller\FollowController.class
 com\example\secondhand\mapper\MessageMapper.class
 com\example\secondhand\entity\ForumBoard.class
+com\example\secondhand\controller\HomeController.class
 com\example\secondhand\mapper\ForumMapper.class
 com\example\secondhand\service\CategoryService.class
 com\example\secondhand\service\ForumBoardService.class

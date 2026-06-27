@@ -1,15 +1,12 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>发布商品</title>
+    <title>发布商品 - 校园二手交易平台</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<header class="topbar">
-    <a class="brand" href="/products">校园二手交易平台</a>
-    <nav><a href="/products">返回列表</a></nav>
-</header>
+<header th:replace="~{fragments/nav :: main('products')}"></header>
 <main class="container small">
     <section class="card">
         <h2>发布商品</h2>
@@ -39,3 +36,4 @@
 </main>
 </body>
 </html>
+

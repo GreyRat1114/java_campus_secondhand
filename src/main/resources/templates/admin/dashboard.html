@@ -2,93 +2,70 @@
 <html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>管理后台</title>
+    <title>管理后台 - 校园二手交易平台</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 </head>
 <body>
-<header class="topbar admin">
-    <a class="brand" href="/admin">管理后台</a>
-    <nav>
-        <a href="/admin/categories">分类管理</a>
-        <a href="/admin/orders">订单管理</a>
-        <a href="/admin/reviews">评价管理</a>
-        <a href="/admin/forum/boards">板块管理</a>
-        <a href="/admin/forum/posts">帖子管理</a>
-        <a href="/admin/forum/comments">评论管理</a>
-        <a href="/products">前台商品</a>
-        <a href="/logout">退出</a>
-    </nav>
-</header>
-<main class="container">
-    <section class="charts">
-        <div class="card"><h3>商品分类统计</h3><div id="categoryChart" class="chart"></div></div>
-        <div class="card"><h3>最近7天订单统计</h3><div id="orderChart" class="chart"></div></div>
+<header th:replace="~{fragments/nav :: admin('dashboard')}"></header>
+
+<main class="container wide admin-dashboard slide-world">
+    <section class="admin-command">
+        <div>
+            <span class="stage-kicker">Admin command</span>
+            <h1>管理后台</h1>
+            <p>审核商品、治理论坛、维护分类和信用评价，平台的关键开关集中在这里。</p>
+        </div>
+        <div class="admin-console-card">
+            <span>Control Center</span>
+            <strong>内容、交易、信用</strong>
+            <p>用更清晰的入口分组，让日常管理像操作面板一样顺手。</p>
+        </div>
     </section>
 
-    <section class="card">
-        <h2>待审核商品</h2>
-        <table>
-            <thead>
-            <tr><th>ID</th><th>标题</th><th>分类</th><th>价格</th><th>卖家</th><th>操作</th></tr>
-            </thead>
-            <tbody>
-            <tr th:each="p : ${pendingProducts}">
-                <td th:text="${p.id}"></td>
-                <td><a th:href="@{/products/{id}(id=${p.id})}" th:text="${p.title}"></a></td>
-                <td th:text="${p.categoryName}"></td>
-                <td th:text="${p.price}"></td>
-                <td th:text="${p.sellerName}"></td>
-                <td class="actions">
-                    <form method="post" th:action="@{/admin/products/{id}/approve(id=${p.id})}"><button>通过</button></form>
-                    <form method="post" th:action="@{/admin/products/{id}/reject(id=${p.id})}"><button class="danger">拒绝</button></form>
-                </td>
-            </tr>
-            <tr th:if="${#lists.isEmpty(pendingProducts)}"><td colspan="6">暂无待审核商品</td></tr>
-            </tbody>
-        </table>
-    </section>
+    <section class="admin-mosaic">
+        <a class="admin-tile tile-large" href="/admin/products">
+            <span>审核</span>
+            <h3>商品审核管理</h3>
+            <p>审核用户发布的商品，通过后商品才会进入前台市场。</p>
+        </a>
 
-    <section class="card">
-        <h2>最近订单</h2>
-        <table>
-            <thead>
-            <tr><th>订单号</th><th>商品</th><th>买家</th><th>卖家</th><th>状态</th><th>创建时间</th></tr>
-            </thead>
-            <tbody>
-            <tr th:each="o : ${recentOrders}">
-                <td th:text="${o.id}"></td>
-                <td><a th:href="@{/products/{id}(id=${o.productId})}" th:text="${o.productTitle}"></a></td>
-                <td th:text="${o.buyerName}"></td>
-                <td th:text="${o.sellerName}"></td>
-                <td><span class="badge" th:text="${o.statusText}"></span></td>
-                <td th:text="${#temporals.format(o.createTime, 'yyyy-MM-dd HH:mm')}"></td>
-            </tr>
-            <tr th:if="${#lists.isEmpty(recentOrders)}"><td colspan="6">暂无订单</td></tr>
-            </tbody>
-        </table>
-        <p><a class="btn" href="/admin/orders">查看全部订单</a></p>
+        <a class="admin-tile" href="/admin/categories">
+            <span>分类</span>
+            <h3>商品分类管理</h3>
+            <p>维护发布商品时的分类选项。</p>
+        </a>
+
+        <a class="admin-tile" href="/admin/orders">
+            <span>订单</span>
+            <h3>订单管理</h3>
+            <p>查看平台交易订单和状态。</p>
+        </a>
+
+        <a class="admin-tile tile-accent" href="/admin/reviews">
+            <span>评价</span>
+            <h3>评价管理</h3>
+            <p>查看评价和信用分变化，维护交易信任。</p>
+        </a>
+
+        <a class="admin-tile" href="/admin/forum/boards">
+            <span>板块</span>
+            <h3>论坛板块管理</h3>
+            <p>维护论坛板块，让内容分类更清晰。</p>
+        </a>
+
+        <a class="admin-tile tile-wide" href="/admin/forum/posts">
+            <span>帖子</span>
+            <h3>帖子管理</h3>
+            <p>审核和删除违规帖子，维护论坛秩序。</p>
+        </a>
+
+        <a class="admin-tile" href="/admin/forum/comments">
+            <span>评论</span>
+            <h3>评论管理</h3>
+            <p>管理帖子回复和楼中楼评论。</p>
+        </a>
     </section>
 </main>
-
-<script>
-    fetch('/api/stats/category').then(r => r.json()).then(data => {
-        const chart = echarts.init(document.getElementById('categoryChart'));
-        chart.setOption({
-            tooltip: {},
-            series: [{ type: 'pie', radius: '65%', data: data }]
-        });
-    });
-
-    fetch('/api/stats/orders7days').then(r => r.json()).then(data => {
-        const chart = echarts.init(document.getElementById('orderChart'));
-        chart.setOption({
-            tooltip: {},
-            xAxis: { type: 'category', data: data.map(x => x.day) },
-            yAxis: { type: 'value' },
-            series: [{ type: 'bar', data: data.map(x => x.count) }]
-        });
-    });
-</script>
+<script th:src="@{/js/page-effects.js}"></script>
 </body>
 </html>

@@ -1,21 +1,12 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>发表评价</title>
+    <title>发表评价 - 校园二手交易平台</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<header class="topbar">
-    <a class="brand" href="/products">校园二手交易平台</a>
-    <nav>
-        <a href="/orders">我的订单</a>
-        <a href="/profile">个人中心</a>
-        <a href="/messages">我的消息</a>
-        <a href="/products">商品列表</a>
-        <a href="/logout">退出</a>
-    </nav>
-</header>
+<header th:replace="~{fragments/nav :: main('profile')}"></header>
 
 <main class="container small">
     <section class="card">
@@ -45,3 +36,4 @@
 </main>
 </body>
 </html>
+

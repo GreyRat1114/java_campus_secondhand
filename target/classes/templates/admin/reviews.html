@@ -1,26 +1,12 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>评价管理</title>
+    <title>评价管理 - 校园二手交易平台</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<header class="topbar admin">
-    <a class="brand" href="/admin">管理后台</a>
-    <nav>
-        <a href="/admin">后台首页</a>
-        <a href="/admin/categories">分类管理</a>
-        <a href="/admin/orders">订单管理</a>
-        <a href="/admin/reviews">评价管理</a>
-        <a href="/admin/forum/boards">板块管理</a>
-        <a href="/admin/forum/posts">帖子管理</a>
-        <a href="/admin/forum/comments">评论管理</a>
-        <a href="/products">前台商品</a>
-        <a href="/messages">我的消息</a>
-        <a href="/logout">退出</a>
-    </nav>
-</header>
+<header th:replace="~{fragments/nav :: admin('reviews')}"></header>
 
 <main class="container">
     <section class="card">
@@ -53,3 +39,4 @@
 </main>
 </body>
 </html>
+

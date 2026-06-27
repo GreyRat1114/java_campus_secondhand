@@ -22,4 +22,20 @@ public interface ProductMapper {
     int insert(Product product);
     int insertImage(@Param("productId") Long productId, @Param("imageUrl") String imageUrl);
     int updateStatus(@Param("id") Long id, @Param("status") String status);
+
+    List<Product> findAdminPage(@Param("keyword") String keyword,
+                                @Param("categoryId") Long categoryId,
+                                @Param("status") String status,
+                                @Param("offset") Integer offset,
+                                @Param("size") Integer size);
+
+    int countAdminPage(@Param("keyword") String keyword,
+                       @Param("categoryId") Long categoryId,
+                       @Param("status") String status);
+
+    List<Product> findRecommendedByBuyer(@Param("userId") Long userId,
+                                          @Param("size") Integer size);
+
+    List<Product> findFallbackRecommendations(@Param("userId") Long userId,
+                                               @Param("size") Integer size);
 }

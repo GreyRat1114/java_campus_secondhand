@@ -22,11 +22,6 @@ public class ProductController {
         this.categoryMapper = categoryMapper;
     }
 
-    @GetMapping("/")
-    public String index() {
-        return "redirect:/products";
-    }
-
     @GetMapping("/products")
     public String list(@RequestParam(required = false) String keyword,
                        @RequestParam(required = false) Long categoryId,
